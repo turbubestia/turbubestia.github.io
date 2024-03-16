@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Turbubestia Music Sight Reading</title>
+    <script src="https://cdn.jsdelivr.net/npm/vexflow@4.2.2/build/cjs/vexflow.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/webmidi@latest/dist/iife/webmidi.iife.js"></script>
+    <script src="assets/midi_interface.js"></script>
+    <script src="assets/sight_reading.js"></script>
+    <link rel="stylesheet" href="assets/midi_selector.css">
+</head>
+<body>
+
+<p>A simple application to practice sight-reading, ideally using a midi keyboard.</p>
+
+<div class="sr_container">
+    <div class="midi">
+        <div class="container">
+            <div class="row">
+                <label for="midi-device" class="full-width">MIDI Device</label>
+                <select id="midi-device" class="full-width"></select>
+            </div>
+            <div class="row">
+                <button id="connect">Connect</button>
+                <button id="disconnect">Disconnect</button>
+            </div>
+            <div class="row">
+                <button id="refresh">Refresh Devices</button>
+            </div>
+            <div class="row">
+                <p id="status">Status: Disconnected</p>
+            </div>
+        </div>
+
+        <div class="container quantity">
+            <div class="row">
+                <label for="noteInterval">Interval</label>
+                <input type="number" id="noteInterval" min="2" max="8" value="3">
+            </div>
+            <div class="row">
+                <label for="noteTimeout">Note Delay</label>
+                <input type="number" id="noteTimeout" min="0.1" max="5" value="1">
+            </div>
+            <div class="row">
+                <label for="noteCount">Note count</label>
+                <select id="noteCount">
+                    <option value="1">1</option>
+                    <option value="2" selected>2</option>
+                    <option value="4">4</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row" >
+                <label for="trebleHighNoteSelector">Treble High</label>
+                <select id="trebleHighNoteSelector">
+                    <option value="C">C</option>
+                    <option value="D">D</option>
+                    <option value="E">E</option>
+                    <option value="F">F</option>
+                    <option value="G">G</option>
+                    <option value="A" selected>A</option>
+                    <option value="B">B</option>
+                </select>
+                <label class="visually-hidden" for="trebleHighOctaveSelector"></label>
+                <input type="number" id="trebleHighOctaveSelector" min="3" max="6" value="5">
+            </div>
+
+            <div class="row">
+                <label for="trebleLowNoteSelector">Treble Low</label>
+                <select id="trebleLowNoteSelector">
+                    <option value="C">C</option>
+                    <option value="D">D</option>
+                    <option value="E">E</option>
+                    <option value="F">F</option>
+                    <option value="G">G</option>
+                    <option value="A">A</option>
+                    <option value="B" selected>B</option>
+                </select>
+                <label class="visually-hidden" for="trebleLowOctaveSelector"></label>
+                <input type="number" id="trebleLowOctaveSelector" min="2" max="5" value="3">
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row" >
+                <label for="bassHighNoteSelector">Bass High</label>
+                <select id="bassHighNoteSelector">
+                    <option value="C" selected>C</option>
+                    <option value="D">D</option>
+                    <option value="E">E</option>
+                    <option value="F">F</option>
+                    <option value="G">G</option>
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                </select>
+                <label class="visually-hidden" for="bassHighOctaveSelector"></label>
+                <input type="number" id="bassHighOctaveSelector" min="2" max="5" value="4">
+            </div>
+            <div class="row">
+                <label for="bassLowNoteSelector">Bass Low</label>
+                <select id="bassLowNoteSelector">
+                    <option value="C">C</option>
+                    <option value="D">D</option>
+                    <option value="E" selected>E</option>
+                    <option value="F">F</option>
+                    <option value="G">G</option>
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                </select>
+                <label class="visually-hidden" for="bassLowOctaveSelector"></label>
+                <input type="number" id="bassLowOctaveSelector" min="1" max="4" value="2">
+            </div>
+        </div>
+    </div>
+
+    <div class="staff" id="div_staff">
+        <div id="staff" class="container"></div>
+        <div>
+            <button id="showNotes" style="width: 100%">ShowNotes</button>
+        </div>
+    </div>
+</div>
+</body>
+</html>
