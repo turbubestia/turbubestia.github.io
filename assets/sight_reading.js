@@ -39,55 +39,48 @@ class staff_note_distribution {
   constructor(begin_note, end_note) {
     this.begin_note = begin_note;
     this.end_note = end_note;
-    this.center_note = new staff_note(Math.round((begin_note.index + end_note.index) / 2.0));
+    
+    // this array saves the history of apparition of each notes in the
+    // configured begin_note to end_node
     this.histogram = new Array(end_note.index - begin_note.index + 1).fill(0);
-    this.direction = 1;
+    
+    this.win_low = Math.round((begin_note.index + end_note.index) / 2.0) - 1;
+    this.win_high = this.win_low + 2;
+    
+    // this.direction = 1;
   }
 
-  generate_random_notes(interval) {
-    // select if we go up or down from this probability distribution
-    const dir_probability = this.direction === 0 ? [0, 0, 0, 0, 0, 1, 1] : [1, 1, 1, 1, 1, 0, 0];
-    const dir = dir_probability[Math.floor(Math.random() * dir_probability.length)];
-
-    const note = this.center_note;
-
-    // peak a random jump up or down
-    let value = dir === 0
-      ? note.index - Math.floor(Math.random() * (interval - 1)) - 1
-      : note.index + Math.floor(Math.random() * (interval - 1)) + 1;
-
-    // bound check, and shift direction if we hit the boundaries
-    if (value <= this.begin_note.index) {
-      value = this.begin_note.index;
-      this.direction = 1;
-    } else if (value >= this.end_note.index) {
-      value = this.end_note.index;
-      this.direction = 0;
+  // dir: 0 for mostly up, 1 for mostly down
+  move_window_random(step) {
+    
+    this.win_low += step;
+    this.win_high += step;
+    
+    if (this.win_low <= this.begin_note.index) {
+      this.win_low = this.begin_note.index;
+      this.win_high = this.begin_note.index + 2;
     }
-
-    this.center_note = new staff_note(value);
-
-    let low_note = new staff_note(this.center_note.index - interval);
-    let high_note = new staff_note(low_note.index + interval);
-
-    return this.random_index_range(low_note, high_note, g_note_count);
+    
+    if (this.win_high >= this.end_note.index) {
+      this.win_low = this.end_note.index - 2;
+      this.win_high = this.end_note.index;
+    }
+  }
+  
+  generate_random_notes() {
+    return this.random_index_range(this.win_low, this.win_high, g_note_count);
   }
 
   random_index_range(low_note, high_note, count) {
     // map global keys to local range
-    let low_index = low_note.index - this.begin_note.index;
-    let high_index = high_note.index - this.begin_note.index;
-
-    // index bound check
-    if (low_index < 0) low_index = 0;
-    if (high_index > this.histogram.length - 1) high_index = this.histogram.length - 1;
-
-    if (Math.abs(high_index - low_index) < 2) {
-      high_index = low_index + 1;
-    }
+    let low_index = low_note - this.begin_note.index;
+    let high_index = high_note - this.begin_note.index;
 
     // limit the probability to the local range
     let probability = this.histogram.slice(low_index, high_index + 1);
+    if (probability.length === 1) {
+      throw "probability array of length 1";
+    }
     const prob_count = Math.max.apply(null, probability) + 1;
     probability = probability.map(element => Math.pow(prob_count - element, 2));
     const prob_norm = probability.reduce((acc, element) => acc + element, 0);
@@ -129,10 +122,10 @@ class staff_note_distribution {
 let g_note_count = 2;
 
 // Range of generated notes
-let g_treble_high_note = new staff_note('A','', 5);
-let g_treble_low_note = new staff_note('C','', 4);
-let g_bass_high_note = new staff_note('C','', 4);
-let g_bass_low_note = new staff_note('E','', 2);
+let g_treble_high_note = new staff_note('E','', 6);
+let g_treble_low_note = new staff_note('E','', 3);
+let g_bass_high_note = new staff_note('G','', 4);
+let g_bass_low_note = new staff_note('G','', 1);
 
 // current notes to match and their match status
 let g_treble_notes = [new staff_note('G','', 4)];
@@ -151,13 +144,40 @@ function update_producers() {
   g_bass_notes_producer = new staff_note_distribution(g_bass_low_note, g_bass_high_note);
 }
 
+let g_direction = 0;
+let g_win_cnt = 0;
+
 function produce_note() {
-  const interval = Number(document.getElementById("noteInterval").value);
 
-  g_treble_notes = g_treble_notes_producer.generate_random_notes(interval);
+  let step_probability = [-1, -1, 0, 0, 1, 1, 1, 1, 2];
+  let step = step_probability[Math.floor(Math.random() * step_probability.length)];
+  if (g_direction === 1) step *= -1;
+
+  g_treble_notes_producer.move_window_random(step);
+  g_bass_notes_producer.move_window_random(step);
+
+  if (g_treble_notes_producer.win_low <= g_treble_notes_producer.begin_note.index &&
+      g_bass_notes_producer.win_low <= g_bass_notes_producer.begin_note.index) {
+    g_win_cnt++;
+    if (g_win_cnt > 6) {
+      g_win_cnt = 0;
+      g_direction = 0;
+    }
+  }
+
+  if (g_treble_notes_producer.win_high >= g_treble_notes_producer.end_note.index &&
+      g_bass_notes_producer.win_high >= g_bass_notes_producer.end_note.index) {
+    g_win_cnt++;
+    if (g_win_cnt > 6) {
+      g_win_cnt = 0;
+      g_direction = 1;
+    }
+  }
+  
+  g_treble_notes = g_treble_notes_producer.generate_random_notes();
+  g_bass_notes = g_bass_notes_producer.generate_random_notes();
+
   g_treble_matches = new Array(g_note_count).fill(false);
-
-  g_bass_notes = g_bass_notes_producer.generate_random_notes(interval);
   g_bass_matches = new Array(g_note_count).fill(false);
 
   g_match_count = 0;
@@ -225,6 +245,7 @@ function draw_staves(
   const stave_treble = new Stave(12, 30.5, 200);
   stave_treble.addClef("treble").addTimeSignature("4/4");
   stave_treble.setStyle({strokeStyle: '#808080', lineWidth: 1.0});
+  stave_treble.setDefaultLedgerLineStyle({strokeStyle: '#808080', lineWidth: 1.0});
   stave_treble.setContext(context).draw();
 
   const treble_voices = build_stave_voices(stave_treble, treble_notes, treble_matches);
