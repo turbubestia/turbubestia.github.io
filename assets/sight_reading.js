@@ -244,8 +244,8 @@ function draw_staves(
   // Treble
   const stave_treble = new Stave(12, 30.5, 200);
   stave_treble.addClef("treble").addTimeSignature("4/4");
-  stave_treble.setStyle({strokeStyle: '#808080', lineWidth: 1.0});
-  stave_treble.setDefaultLedgerLineStyle({strokeStyle: '#808080', lineWidth: 1.0});
+  stave_treble.setStyle({strokeStyle: '#CCCCCC', lineWidth: 1.0});
+  stave_treble.setDefaultLedgerLineStyle({strokeStyle: '#CCCCCC', lineWidth: 1.0});
   stave_treble.setContext(context).draw();
 
   const treble_voices = build_stave_voices(stave_treble, treble_notes, treble_matches);
@@ -253,7 +253,8 @@ function draw_staves(
   // Bass
   const stave_bass = new Stave(12, 160.5, 200);
   stave_bass.addClef("bass").addTimeSignature("4/4");
-  stave_bass.setStyle({strokeStyle: '#808080', lineWidth: 1.0});
+  stave_bass.setStyle({strokeStyle: '#CCCCCC', lineWidth: 1.0});
+  stave_bass.setDefaultLedgerLineStyle({strokeStyle: '#CCCCCC', lineWidth: 1.05});
   stave_bass.setContext(context).draw();
 
   const bass_voices = build_stave_voices(stave_bass, bass_notes, bass_matches);
