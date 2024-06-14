@@ -147,6 +147,9 @@ function update_producers() {
 let g_direction = 0;
 let g_win_cnt = 0;
 
+let g_rh_enabled = true;
+let g_lh_enabled = true;
+
 function produce_note() {
 
   let step_probability = [-1, -1, 0, 0, 1, 1, 1, 1, 2];
@@ -241,36 +244,55 @@ function draw_staves(
   context.setStrokeStyle('white');
   context.setFillStyle('white');
 
+  let stave_treble;
+  let treble_voices;
+  
   // Treble
-  const stave_treble = new Stave(12, 30.5, 200);
-  stave_treble.addClef("treble").addTimeSignature("4/4");
-  stave_treble.setStyle({strokeStyle: '#CCCCCC', lineWidth: 1.0});
-  stave_treble.setDefaultLedgerLineStyle({strokeStyle: '#CCCCCC', lineWidth: 1.0});
-  stave_treble.setContext(context).draw();
+  if (g_rh_enabled) {
+    stave_treble = new Stave(12, 30.5, 200);
+    stave_treble.addClef("treble").addTimeSignature("4/4");
+    stave_treble.setStyle({strokeStyle: '#CCCCCC', lineWidth: 1.0});
+    stave_treble.setDefaultLedgerLineStyle({strokeStyle: '#CCCCCC', lineWidth: 1.0});
+    stave_treble.setContext(context).draw();
 
-  const treble_voices = build_stave_voices(stave_treble, treble_notes, treble_matches);
+    treble_voices = build_stave_voices(stave_treble, treble_notes, treble_matches);
+  }
+  
+  let stave_bass
+  let bass_voices;
+  
+  if (g_lh_enabled) {
+    // Bass
+    stave_bass = new Stave(12, 160.5, 200);
+    stave_bass.addClef("bass").addTimeSignature("4/4");
+    stave_bass.setStyle({strokeStyle: '#CCCCCC', lineWidth: 1.0});
+    stave_bass.setDefaultLedgerLineStyle({strokeStyle: '#CCCCCC', lineWidth: 1.05});
+    stave_bass.setContext(context).draw();
 
-  // Bass
-  const stave_bass = new Stave(12, 160.5, 200);
-  stave_bass.addClef("bass").addTimeSignature("4/4");
-  stave_bass.setStyle({strokeStyle: '#CCCCCC', lineWidth: 1.0});
-  stave_bass.setDefaultLedgerLineStyle({strokeStyle: '#CCCCCC', lineWidth: 1.05});
-  stave_bass.setContext(context).draw();
-
-  const bass_voices = build_stave_voices(stave_bass, bass_notes, bass_matches);
-
-  // Drawing composition
-  new Formatter()
-    .joinVoices(treble_voices)
-    .joinVoices(bass_voices)
-    .format([...treble_voices, ...bass_voices], 125);
-
-  treble_voices[0].draw(context, stave_treble);
-  bass_voices[0].draw(context, stave_bass);
-
-  if (show_note_labels) {
-    treble_voices[1].draw(context, stave_treble);
-    bass_voices[1].draw(context, stave_bass);
+    bass_voices = build_stave_voices(stave_bass, bass_notes, bass_matches);
+  }
+  
+  let formatter = new Formatter();
+  if (g_rh_enabled && !g_lh_enabled) {
+    formatter.joinVoices(treble_voices).format(treble_voices, 125);
+  } else if (g_lh_enabled && !g_rh_enabled) {
+    formatter.joinVoices(bass_voices).format(bass_voices, 125);
+  } else {
+    formatter.joinVoices(treble_voices).joinVoices(bass_voices).format([...treble_voices, ...bass_voices], 125);
+  }
+  
+  if (g_rh_enabled) {
+    treble_voices[0].draw(context, stave_treble);
+    if (show_note_labels) {
+      treble_voices[1].draw(context, stave_treble);
+    }
+  }
+  
+  if (g_lh_enabled) {
+    bass_voices[0].draw(context, stave_bass);
+    if (show_note_labels) {
+      bass_voices[1].draw(context, stave_bass);
+    }
   }
 }
 
@@ -353,6 +375,22 @@ document.addEventListener('DOMContentLoaded', function() {
     draw_staves();
   });
 
+  // hand selection
+  document.getElementById('rh_radio').addEventListener('change', function() {
+    g_rh_enabled = this.checked || document.getElementById('bt_radio').checked;
+    g_lh_enabled = document.getElementById('bt_radio').checked;
+  })
+  
+  document.getElementById('lh_radio').addEventListener('change', function() {
+    g_rh_enabled = document.getElementById('bt_radio').checked;
+    g_lh_enabled = this.checked || document.getElementById('bt_radio').checked;
+  })
+
+  document.getElementById('bt_radio').addEventListener('change', function() {
+    g_rh_enabled = this.checked;
+    g_lh_enabled = this.checked;
+  })
+  
   // treble note generation range
   document.getElementById('trebleHighNoteSelector').addEventListener('change', function() {
     update_treble_high_note(new staff_note(this.value, '', g_treble_high_note.octave));

@@ -71,8 +71,8 @@ function midi_key_press(e) {
     }
 
     const note = new staff_note(e.note.name, e.note.accidental, e.note.octave);
-    const treble_match = note.eq(g_treble_notes[g_match_count]);
-    const bass_match = note.eq(g_bass_notes[g_match_count]);
+    let treble_match = note.eq(g_treble_notes[g_match_count]) && g_rh_enabled;
+    let bass_match = note.eq(g_bass_notes[g_match_count]) && g_lh_enabled;
 
     if (treble_match) {
         g_treble_matches[g_match_count] = true;
@@ -83,7 +83,10 @@ function midi_key_press(e) {
         g_bass_matches[g_match_count] = bass_match;
     }
 
-    if (g_treble_matches[g_match_count] && g_bass_matches[g_match_count]) {
+    treble_match = g_treble_matches[g_match_count] || !g_rh_enabled;
+    bass_match = g_bass_matches[g_match_count] || !g_lh_enabled;
+    
+    if (treble_match && bass_match) {
         g_match_count++;
     }
 
@@ -109,8 +112,8 @@ function midi_key_release(e) {
         draw_staves();
     } else {
         const note = new staff_note(e.note.name, e.note.accidental, e.note.octave);
-        const treble_match = note.eq(g_treble_notes[g_match_count]);
-        const bass_match = note.eq(g_bass_notes[g_match_count]);
+        const treble_match = note.eq(g_treble_notes[g_match_count]) && g_rh_enabled;
+        const bass_match = note.eq(g_bass_notes[g_match_count]) && g_lh_enabled;
 
         if (g_match_count < g_note_count) {
             if (treble_match) {

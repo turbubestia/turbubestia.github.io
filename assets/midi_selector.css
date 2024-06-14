@@ -104,15 +104,18 @@ input {
 .sr_container {
   display: flex;
   flex-direction: column;
-  justify-content: start;
+  justify-content: center;
   align-items: center;
+  height: 100vh;
 }
 
 /* Media Query */
-@media (min-width: 500px) { /* Adjust this value based on your actual combined width */
+
+@media (min-width: 500px) {
   .sr_container {
-    flex-direction: row; /* Switch to horizontal layout */
+    flex-direction: row;
     justify-content: center;
-    align-items: start;
+    align-items: center;
+    height: 100vh;
   }
 }
