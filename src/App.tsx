@@ -1,13 +1,30 @@
 import { useState } from 'react';
 import { apps, type AppEntry } from './apps/registry';
+import { useUpdateCheck } from './useUpdateCheck';
+
+function UpdateBanner() {
+  return (
+    <div className="fixed inset-x-0 top-0 z-50 flex items-center justify-between gap-4 border-b border-panel-border bg-panel px-4 py-2 text-sm">
+      <span className="text-neutral-200">New version available</span>
+      <button
+        onClick={() => window.location.reload()}
+        className="rounded-lg border border-panel-border bg-bg px-3 py-1 hover:bg-bg/70"
+      >
+        Reload
+      </button>
+    </div>
+  );
+}
 
 export default function App() {
   const [activeApp, setActiveApp] = useState<AppEntry | null>(null);
+  const updateAvailable = useUpdateCheck();
 
   if (activeApp) {
     const ActiveComponent = activeApp.component;
     return (
       <div className="min-h-screen bg-bg text-neutral-300">
+        {updateAvailable && <UpdateBanner />}
         <header className="flex items-center gap-3 border-b border-panel-border px-4 py-2">
           <button
             onClick={() => setActiveApp(null)}
@@ -24,6 +41,7 @@ export default function App() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-bg p-8 text-neutral-300">
+      {updateAvailable && <UpdateBanner />}
       <h1 className="mb-2 text-3xl font-bold text-neutral-100">Turbubestia</h1>
       <p className="mb-8 text-sm text-neutral-400">Music practice apps</p>
       <div className="grid grid-cols-2 gap-6 sm:grid-cols-3">
