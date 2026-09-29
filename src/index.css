@@ -1,0 +1,7 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #202024;
+  --color-panel: #303034;
+  --color-panel-border: #808080;
+}
