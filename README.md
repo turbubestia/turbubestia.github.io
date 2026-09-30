@@ -47,7 +47,6 @@ src/
   main.tsx                  # entry point
   App.tsx                   # app launcher (grid of app cards)
   index.css                 # Tailwind v4 + theme tokens
-  webmidi.d.ts              # WebMIDI global type declarations
   apps/
     registry.ts             # app registry (id, title, icon, component)
     sight-reading/

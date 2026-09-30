@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Input, WebMidi } from 'webmidi';
 import { StaffNote } from './note';
 
 export type MidiStatus = 'unsupported' | 'disconnected' | 'connected';
@@ -24,7 +25,7 @@ export interface UseMidiResult {
 export function useMidi({ onNoteOn, onNoteOff }: UseMidiOptions): UseMidiResult {
   const [devices, setDevices] = useState<string[]>([]);
   const [status, setStatus] = useState<MidiStatus>('disconnected');
-  const connectedRef = useRef<WebMidi.MIDIInput | null>(null);
+  const connectedRef = useRef<Input | null>(null);
 
   const callbacksRef = useRef({ onNoteOn, onNoteOff });
   useEffect(() => {
@@ -32,47 +33,56 @@ export function useMidi({ onNoteOn, onNoteOff }: UseMidiOptions): UseMidiResult 
   }, [onNoteOn, onNoteOff]);
 
   const refresh = useCallback(() => {
-    if (typeof WebMidi === 'undefined') {
+    if (!navigator.requestMIDIAccess) {
       setStatus('unsupported');
       return;
     }
     WebMidi.enable()
       .then(() => {
-        setDevices(WebMidi.inputs.map((input) => input.name));
+        setDevices(Array.from(WebMidi.inputs.values()).map((input) => input.name ?? ''));
       })
       .catch((err) => alert(err));
   }, []);
 
-  const connect = useCallback(
-    (name: string) => {
-      if (typeof WebMidi === 'undefined') return;
-      const input = WebMidi.getInputByName(name);
-      if (!input) return;
+  const connect = useCallback((name: string) => {
+    const input = WebMidi.getInputByName(name);
+    if (!input) {
+      console.warn('[midi] no input found for name:', JSON.stringify(name));
+      return;
+    }
+    console.log('[midi] connecting to', input.name, '(id:', input.id + ', state:', input.state + ')');
 
-      input.addListener('noteon', (e) => {
-        if (e.type !== 'noteon') return;
-        callbacksRef.current.onNoteOn(
-          new StaffNote(e.note.name, e.note.accidental, e.note.octave),
-        );
-      });
-      input.addListener('noteoff', (e) => {
-        if (e.type !== 'noteoff') return;
-        callbacksRef.current.onNoteOff(
-          new StaffNote(e.note.name, e.note.accidental, e.note.octave),
-        );
-      });
+    // DEBUG: log every raw message to confirm the port is actually receiving data.
+    input.addListener('midimessage', (e) => {
+      console.log('[midi] raw message:', e.type, 'data:', Array.from(e.data));
+    });
 
-      connectedRef.current = input;
-      setStatus('connected');
-    },
-    [],
-  );
+    // WebMidi.js leaves `accidental` undefined for natural notes; StaffNote expects ''.
+    input.channels[1].addListener('noteon', (e) => {
+      console.log('[midi] noteon:', e.note.name, e.note.accidental ?? '', e.note.octave);
+      callbacksRef.current.onNoteOn(
+        new StaffNote(e.note.name, e.note.accidental ?? '', e.note.octave),
+      );
+    });
+
+    input.channels[1].addListener('noteoff', (e) => {
+      console.log('[midi] noteoff:', e.note.name, e.note.accidental ?? '', e.note.octave);
+      callbacksRef.current.onNoteOff(
+        new StaffNote(e.note.name, e.note.accidental ?? '', e.note.octave),
+      );
+    });
+
+    connectedRef.current = input;
+    setStatus('connected');
+  }, []);
 
   const disconnect = useCallback(() => {
     const input = connectedRef.current;
     if (input) {
-      input.removeListener('noteon');
-      input.removeListener('noteoff');
+      // Listeners live on the channel, not the Input.
+      input.channels[1].removeListener('noteon');
+      input.channels[1].removeListener('noteoff');
+      input.removeListener('midimessage');
       connectedRef.current = null;
     }
     setStatus('disconnected');
@@ -80,10 +90,10 @@ export function useMidi({ onNoteOn, onNoteOff }: UseMidiOptions): UseMidiResult 
 
   // Track devices appearing/disappearing while enabled.
   useEffect(() => {
-    if (typeof WebMidi === 'undefined') return;
-    const onChange = () => setDevices(WebMidi.inputs.map((input) => input.name));
-    WebMidi.addEventListener('midimessage', onChange);
-    return () => WebMidi.removeEventListener('midimessage', onChange);
+    const onChange = () =>
+      setDevices(Array.from(WebMidi.inputs.values()).map((input) => input.name ?? ''));
+    WebMidi.addListener('portschanged', onChange);
+    return () => WebMidi.removeListener('portschanged', onChange);
   }, []);
 
   // Clean up on unmount.

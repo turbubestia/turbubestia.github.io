@@ -190,10 +190,12 @@ export function SightReadingApp() {
 
   // UI -----------------------------------------------------------------------
   return (
+    <div className="p-4">
+    <MidiPanel midi={midi} />
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-4 md:flex-row">
       {/* Settings panel */}
-      <div className="flex w-full max-w-xs flex-col gap-3">
-        <MidiPanel midi={midi} />
+      <div className="flex w-full max-w-xs flex-col gap-1">
+        {/* <MidiPanel midi={midi} /> */}
 
         <Card title="Hand">
           <div className="flex gap-4 text-sm">
@@ -325,6 +327,7 @@ export function SightReadingApp() {
         </button>
       </div>
     </div>
+    </div>
   );
 }
 
@@ -332,8 +335,8 @@ export function SightReadingApp() {
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-panel-border bg-panel p-3">
-      <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-400">
+    <div className="rounded-xl bg-panel p-2">
+      <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-neutral-400">
         {title}
       </h2>
       {children}
@@ -386,14 +389,15 @@ function RangeRow({
 
 function MidiPanel({ midi }: { midi: ReturnType<typeof useMidi> }) {
   return (
-    <Card title="MIDI device">
-      <div className="flex flex-col gap-2 text-sm">
+      <div className="flex flex-row items-center justify-center gap-2 text-sm rounded-xl p-4 bg-panel">
+        <p className="text-xs font-bold uppercase text-neutral-400">
+          Devices
+        </p>
         <select
           value={midi.devices[0] ?? ''}
           onChange={(e) => midi.connect(e.target.value)}
           disabled={midi.status === 'connected'}
-          className="w-full rounded border border-panel-border bg-panel px-2 py-1"
-        >
+          className="w-40 rounded-lg bg-neutral-800 py-1">
           {midi.devices.length === 0 && <option value="">No devices found</option>}
           {midi.devices.map((name) => (
             <option key={name} value={name}>
@@ -401,26 +405,21 @@ function MidiPanel({ midi }: { midi: ReturnType<typeof useMidi> }) {
             </option>
           ))}
         </select>
-        <div className="flex gap-2">
-          <button
-            onClick={() => midi.connect(midi.devices[0] ?? '')}
-            disabled={midi.status === 'connected' || midi.devices.length === 0}
-            className="flex-1 rounded-lg border border-panel-border bg-panel px-3 py-1 hover:bg-panel/70 disabled:opacity-40"
-          >
-            Connect
-          </button>
-          <button
-            onClick={midi.disconnect}
-            disabled={midi.status !== 'connected'}
-            className="flex-1 rounded-lg border border-panel-border bg-panel px-3 py-1 hover:bg-panel/70 disabled:opacity-40"
-          >
-            Disconnect
-          </button>
-        </div>
+        <button
+          onClick={() =>
+            midi.status === 'connected' ? midi.disconnect() : midi.connect(midi.devices[0] ?? '')
+          }
+          disabled={midi.devices.length === 0}
+          className={`w-40 rounded-lg px-3 py-1 disabled:opacity-40 ${
+            midi.status === 'connected'
+              ? 'bg-green-900 text-green-300 hover:bg-green-500'
+              : 'bg-red-900 text-red-300 hover:bg-red-700'
+          }`}>
+          {midi.status === 'connected' ? 'Disconnect' : 'Connect'}
+        </button>
         <button
           onClick={midi.refresh}
-          className="rounded-lg border border-panel-border bg-panel px-3 py-1 hover:bg-panel/70"
-        >
+          className="w-40 rounded-lg bg-neutral-800 px-3 py-1 hover:bg-neutral-500">
           Refresh devices
         </button>
         <p className="text-xs text-neutral-400">
@@ -432,6 +431,5 @@ function MidiPanel({ midi }: { midi: ReturnType<typeof useMidi> }) {
               : 'Disconnected'}
         </p>
       </div>
-    </Card>
   );
 }
