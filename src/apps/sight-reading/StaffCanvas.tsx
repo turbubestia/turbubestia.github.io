@@ -34,8 +34,7 @@ function buildStaveVoices(
   const duration = noteDuration(noteCount);
 
   // Notes above the staff center get stems pointing down.
-  const centerNote =
-    stave.getClef() === 'bass' ? new StaffNote('D', '', 3) : new StaffNote('B', '', 4);
+  const centerNote = stave.getClef() === 'bass' ? new StaffNote('D', '', 3) : new StaffNote('B', '', 4);
 
   const vexNotes: StaveNote[] = [];
   const textNotes: TextNote[] = [];

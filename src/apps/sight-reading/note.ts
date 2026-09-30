@@ -9,17 +9,18 @@ export class StaffNote {
   readonly octave: number;
   readonly index: number;
 
-  /** Build from a flat note index (0 = C of octave 1). */
+  /** Build from a flat note index (0 = A of octave 0). */
   constructor(index: number);
   /** Build from note name, accidental and octave. */
   constructor(name: string, accidental: string, octave: number);
   constructor(first: number | string, accidental?: string, octave?: number) {
     if (typeof first === 'number') {
-      const oct = Math.ceil((first + 1) / NOTE_NAMES.length);
-      const pos = first - (oct - 1) * NOTE_NAMES.length;
+      first += 5;
+      const oct = Math.floor(first / NOTE_NAMES.length);
+      const pos = first - oct * NOTE_NAMES.length;
       this.name = NOTE_NAMES[pos];
       this.octave = oct;
-      this.index = first;
+      this.index = first - 5;
       this.accidental = '';
     } else if (accidental !== undefined && octave !== undefined) {
       this.name = first;
@@ -27,7 +28,8 @@ export class StaffNote {
       this.octave = Number(octave);
       const position = NOTE_NAMES.indexOf(this.name as (typeof NOTE_NAMES)[number]);
       if (position < 0) throw new Error(`staff_note: unknown note name "${first}"`);
-      this.index = NOTE_NAMES.length * (this.octave - 1) + position;
+      this.index = NOTE_NAMES.length * (this.octave) + position - 5;
+      if (this.index < 0) throw new Error(`staff_note: note below A0`);
     } else {
       throw new Error('StaffNote::constructor() incorrect number of arguments.');
     }

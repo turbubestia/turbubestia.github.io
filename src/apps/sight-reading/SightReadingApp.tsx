@@ -22,6 +22,7 @@ const NOTE_OPTIONS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
 
 function freshState(producer: NoteProducer, interval: number, count: number): GameState {
   const produced = producer.produce(interval, count);
+  console.log(produced.treble[0])
   return {
     trebleNotes: produced.treble,
     bassNotes: produced.bass,
@@ -85,6 +86,9 @@ export function SightReadingApp() {
     (note: StaffNote) => {
       setGame((prev) => {
         if (prev.matchCount >= noteCount) return prev;
+
+        console.log(note)
+        console.log(prev.trebleNotes)
 
         const pos = prev.matchCount;
         const trebleMatch = note.eq(prev.trebleNotes[pos]) && rhEnabled;

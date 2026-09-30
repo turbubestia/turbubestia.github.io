@@ -60,9 +60,8 @@ export function useMidi({ onNoteOn, onNoteOff }: UseMidiOptions): UseMidiResult 
     // WebMidi.js leaves `accidental` undefined for natural notes; StaffNote expects ''.
     input.channels[1].addListener('noteon', (e) => {
       console.log('[midi] noteon:', e.note.name, e.note.accidental ?? '', e.note.octave);
-      callbacksRef.current.onNoteOn(
-        new StaffNote(e.note.name, e.note.accidental ?? '', e.note.octave),
-      );
+      const note = new StaffNote(e.note.name, e.note.accidental ?? '', e.note.octave);
+      callbacksRef.current.onNoteOn( note );
     });
 
     input.channels[1].addListener('noteoff', (e) => {
