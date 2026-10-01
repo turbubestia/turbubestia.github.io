@@ -1,203 +1,27 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { NoteProducer, StaffNote } from './note';
+import { useState } from 'react';
+import { StaffNote } from './note';
 import { useMidi } from './useMidi';
 import { StaffCanvas } from './StaffCanvas';
-
-type HandMode = 'lh' | 'rh' | 'bt';
-
-interface GameState {
-  trebleNotes: StaffNote[];
-  bassNotes: StaffNote[];
-  trebleMatches: boolean[];
-  bassMatches: boolean[];
-  matchCount: number;
-}
-
-interface NoteRange {
-  low: StaffNote;
-  high: StaffNote;
-}
+import { DEFAULT_SETTINGS, type GameSettings, type HandMode } from './game';
+import { useSightReadingGame } from './useSightReadingGame';
 
 const NOTE_OPTIONS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
 
-function freshState(producer: NoteProducer, interval: number, count: number): GameState 
-{
-  const produced = producer.produce(interval, count);
-
-  return {
-    trebleNotes: produced.treble,
-    bassNotes: produced.bass,
-    trebleMatches: new Array(count).fill(false),
-    bassMatches: new Array(count).fill(false),
-    matchCount: 0,
-  };
-}
-
 export function SightReadingApp() 
 {
-  // Settings ---------------------------------------------------------------
-  const [handMode, setHandMode] = useState<HandMode>('bt');
-  const rhEnabled = handMode !== 'lh';
-  const lhEnabled = handMode !== 'rh';
+  const { game, snapshot } = useSightReadingGame(DEFAULT_SETTINGS);
+  const { state, settings } = snapshot;
 
-  const [noteCount, setNoteCount] = useState(2);
-  const [noteDelay, setNoteDelay] = useState(1);
-  const [interval, setIntervalSize] = useState(3);
-
-  const [trebleRange, setTrebleRange] = useState<NoteRange>({
-    low: new StaffNote('B', '', 3),
-    high: new StaffNote('A', '', 5),
-  });
-
-  const [bassRange, setBassRange] = useState<NoteRange>({
-    low: new StaffNote('E', '', 2),
-    high: new StaffNote('C', '', 4),
-  });
+  const rhEnabled = settings.handMode !== 'lh';
+  const lhEnabled = settings.handMode !== 'rh';
 
   const [showLabels, setShowLabels] = useState(false);
 
-  // Game state -------------------------------------------------------------
-
-  const timerRef = useRef<number | null>(null);
-  const clearTimer = useCallback(() => {
-    if (timerRef.current !== null) {
-      window.clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-  }, []);
-
-  // The producer is mutable but created once; useState keeps it stable
-  // across renders without constructing a throwaway instance each render.
-  const [producer] = useState(
-    () =>
-      new NoteProducer(
-        new StaffNote('B', '', 3),
-        new StaffNote('A', '', 5),
-        new StaffNote('E', '', 2),
-        new StaffNote('C', '', 4),
-      ),
-  );
-
-  const [game, setGame] = useState<GameState>(() => freshState(producer, 3, 2));
-  
-  const produce = useCallback(
-    (count: number, stepInterval: number) => {
-      clearTimer();
-      setGame(freshState(producer, stepInterval, count));
-    },
-    [clearTimer, producer],
-  );
-
   // MIDI -------------------------------------------------------------------
-  const onNoteOn = useCallback(
-    // this is called when a note is played on the MIDI keyboard and the callback
-    // is called by the midi controller but also when the dependencies change, to
-    // have the same effect which is to update the game state with the new note.
-    (note: StaffNote) => {
-      setGame((prev) => {
-        if (prev.matchCount >= noteCount) return prev;
-
-        const pos = prev.matchCount;
-        const trebleMatch = note.eq(prev.trebleNotes[pos]) && rhEnabled;
-        const bassMatch = note.eq(prev.bassNotes[pos]) && lhEnabled;
-
-        const trebleMatches = [...prev.trebleMatches];
-        const bassMatches = [...prev.bassMatches];
-        if (trebleMatch) trebleMatches[pos] = true;
-        if (bassMatch) bassMatches[pos] = true;
-
-        const done = (trebleMatches[pos] || !rhEnabled) && (bassMatches[pos] || !lhEnabled);
-        const matchCount = done ? pos + 1 : pos;
-
-        if (matchCount === noteCount) {
-          clearTimer();
-          timerRef.current = window.setTimeout(() => {
-            timerRef.current = null;
-            setGame(freshState(producer, interval, noteCount));
-          }, noteDelay * 1000);
-        }
-
-        return { ...prev, trebleMatches, bassMatches, matchCount };
-      });
-    },
-    [noteCount, rhEnabled, lhEnabled, noteDelay, interval, clearTimer, producer],
-  );
-
-  const onNoteOff = useCallback(
-    (note: StaffNote) => {
-      setGame((prev) => {
-        if (prev.matchCount >= noteCount) return prev; // round over; timer advances
-
-        const pos = prev.matchCount;
-        const trebleMatch = note.eq(prev.trebleNotes[pos]) && rhEnabled;
-        const bassMatch = note.eq(prev.bassNotes[pos]) && lhEnabled;
-
-        const trebleMatches = [...prev.trebleMatches];
-        const bassMatches = [...prev.bassMatches];
-        if (trebleMatch) trebleMatches[pos] = false;
-        if (bassMatch) bassMatches[pos] = false;
-
-        return { ...prev, trebleMatches, bassMatches };
-      });
-    },
-    [noteCount, rhEnabled, lhEnabled],
-  );
-
-  const midi = useMidi({ onNoteOn, onNoteOff });
-
-  // Cleanup ----------------------------------------------------------------
-  useEffect(() => clearTimer, [clearTimer]);
-
-  // Settings handlers --------------------------------------------------------
-  const updateTrebleRange = (part: 'low' | 'high', noteName: string, octave: number) => {
-    const candidate = new StaffNote(noteName, '', octave);
-    if (part === 'high') {
-      if (candidate.gt(trebleRange.low)) {
-        setTrebleRange({ low: trebleRange.low, high: candidate });
-        producer.setTrebleRange(trebleRange.low, candidate);
-        produce(noteCount, interval);
-      } else {
-        console.log(
-          `Treble high note (${candidate}) must be higher than the treble low note ${trebleRange.low}`,
-        );
-      }
-    } else {
-      if (candidate.lt(trebleRange.high)) {
-        setTrebleRange({ low: candidate, high: trebleRange.high });
-        producer.setTrebleRange(candidate, trebleRange.high);
-        produce(noteCount, interval);
-      } else {
-        console.log(
-          `Treble low note (${candidate}) must be lower than the treble high note ${trebleRange.high}`,
-        );
-      }
-    }
-  };
-
-  const updateBassRange = (part: 'low' | 'high', noteName: string, octave: number) => {
-    const candidate = new StaffNote(noteName, '', octave);
-    if (part === 'high') {
-      if (candidate.gt(bassRange.low)) {
-        setBassRange({ low: bassRange.low, high: candidate });
-        producer.setBassRange(bassRange.low, candidate);
-        produce(noteCount, interval);
-      } else {
-        console.log(
-          `Bass high note (${candidate}) must be higher than the bass low note ${bassRange.low}`,
-        );
-      }
-    } else {
-      if (candidate.lt(bassRange.high)) {
-        setBassRange({ low: candidate, high: bassRange.high });
-        producer.setBassRange(candidate, bassRange.high);
-        produce(noteCount, interval);
-      } else {
-        console.log(
-          `Bass low note (${candidate}) must be lower than the bass high note ${bassRange.high}`,
-        );
-      }
-    }
-  };
+  const midi = useMidi({
+    onNoteOn: (note) => game.noteOn(note),
+    onNoteOff: (note) => game.noteOff(note),
+  });
 
   // UI -----------------------------------------------------------------------
   return (
@@ -205,126 +29,28 @@ export function SightReadingApp()
     <MidiPanel midi={midi} />
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-4 md:flex-row">
       {/* Settings panel */}
-      <div className="flex w-full max-w-xs flex-col gap-1">
-        {/* <MidiPanel midi={midi} /> */}
-
-        <Card title="Hand">
-          <div className="flex gap-4 text-sm">
-            {(
-              [
-                ['lh', 'LH'],
-                ['rh', 'RH'],
-                ['bt', 'Both'],
-              ] as [HandMode, string][]
-            ).map(([value, label]) => (
-              <label key={value} className="flex cursor-pointer items-center gap-1">
-                <input
-                  type="radio"
-                  name="hand"
-                  checked={handMode === value}
-                  onChange={() => setHandMode(value)}
-                />
-                {label}
-              </label>
-            ))}
-          </div>
-        </Card>
-
-        <Card title="Timing">
-          <div className="flex flex-col gap-2 text-sm">
-            <label className="flex items-center justify-between gap-2">
-              Interval
-              <input
-                type="number"
-                min={1}
-                max={8}
-                value={interval}
-                onChange={(e) => setIntervalSize(Number(e.target.value))}
-                className="w-16 rounded border border-panel-border bg-panel px-2 py-0.5"
-              />
-            </label>
-            <label className="flex items-center justify-between gap-2">
-              Note delay (s)
-              <input
-                type="number"
-                min={0.1}
-                max={5}
-                step={0.1}
-                value={noteDelay}
-                onChange={(e) => setNoteDelay(Number(e.target.value))}
-                className="w-16 rounded border border-panel-border bg-panel px-2 py-0.5"
-              />
-            </label>
-            <label className="flex items-center justify-between gap-2">
-              Note count
-              <select
-                value={noteCount}
-                onChange={(e) => {
-                  const count = Number(e.target.value);
-                  setNoteCount(count);
-                  produce(count, interval);
-                }}
-                className="w-16 rounded border border-panel-border bg-panel px-2 py-0.5"
-              >
-                <option value={1}>1</option>
-                <option value={2}>2</option>
-                <option value={4}>4</option>
-              </select>
-            </label>
-          </div>
-        </Card>
-
-        <Card title="Treble range">
-          <RangeRow
-            label="High"
-            note={trebleRange.high.name}
-            octave={trebleRange.high.octave}
-            octaveMin={3}
-            octaveMax={6}
-            onChange={(n, o) => updateTrebleRange('high', n, o)}
-          />
-          <RangeRow
-            label="Low"
-            note={trebleRange.low.name}
-            octave={trebleRange.low.octave}
-            octaveMin={2}
-            octaveMax={5}
-            onChange={(n, o) => updateTrebleRange('low', n, o)}
-          />
-        </Card>
-
-        <Card title="Bass range">
-          <RangeRow
-            label="High"
-            note={bassRange.high.name}
-            octave={bassRange.high.octave}
-            octaveMin={2}
-            octaveMax={5}
-            onChange={(n, o) => updateBassRange('high', n, o)}
-          />
-          <RangeRow
-            label="Low"
-            note={bassRange.low.name}
-            octave={bassRange.low.octave}
-            octaveMin={1}
-            octaveMax={4}
-            onChange={(n, o) => updateBassRange('low', n, o)}
-          />
-        </Card>
-      </div>
+      <SettingsPanel
+        settings={settings}
+        onHandMode={(mode) => game.setHandMode(mode)}
+        onInterval={(size) => game.setIntervalSize(size)}
+        onNoteDelay={(seconds) => game.setNoteDelay(seconds)}
+        onNoteCount={(count) => game.setNoteCount(count)}
+        onTrebleRange={(low, high) => game.setTrebleRange(low, high)}
+        onBassRange={(low, high) => game.setBassRange(low, high)}
+      />
 
       {/* Staff */}
       <div className="flex flex-col items-center gap-3 rounded-xl border border-panel-border bg-panel p-3">
         <div
           className="cursor-pointer"
           title="Click to generate new notes"
-          onClick={() => produce(noteCount, interval)}
+          onClick={() => game.restart()}
         >
           <StaffCanvas
-            trebleNotes={game.trebleNotes}
-            trebleMatches={game.trebleMatches}
-            bassNotes={game.bassNotes}
-            bassMatches={game.bassMatches}
+            trebleNotes={state.trebleNotes}
+            trebleMatches={state.trebleMatches}
+            bassNotes={state.bassNotes}
+            bassMatches={state.bassMatches}
             rhEnabled={rhEnabled}
             lhEnabled={lhEnabled}
             showLabels={showLabels}
@@ -343,6 +69,128 @@ export function SightReadingApp()
 }
 
 // Small presentational helpers ------------------------------------------------
+
+function SettingsPanel({
+  settings,
+  onHandMode,
+  onInterval,
+  onNoteDelay,
+  onNoteCount,
+  onTrebleRange,
+  onBassRange,
+}: {
+  settings: GameSettings;
+  onHandMode: (mode: HandMode) => void;
+  onInterval: (size: number) => void;
+  onNoteDelay: (seconds: number) => void;
+  onNoteCount: (count: number) => void;
+  onTrebleRange: (low: StaffNote, high: StaffNote) => void;
+  onBassRange: (low: StaffNote, high: StaffNote) => void;
+}) {
+  return (
+    <div className="flex w-full max-w-xs flex-col gap-1">
+      <Card title="Hand">
+        <div className="flex gap-4 text-sm">
+          {(
+            [
+              ['lh', 'LH'],
+              ['rh', 'RH'],
+              ['bt', 'Both'],
+            ] as [HandMode, string][]
+          ).map(([value, label]) => (
+            <label key={value} className="flex cursor-pointer items-center gap-1">
+              <input
+                type="radio"
+                name="hand"
+                checked={settings.handMode === value}
+                onChange={() => onHandMode(value)}
+              />
+              {label}
+            </label>
+          ))}
+        </div>
+      </Card>
+
+      <Card title="Timing">
+        <div className="flex flex-col gap-2 text-sm">
+          <label className="flex items-center justify-between gap-2">
+            Interval
+            <input
+              type="number"
+              min={1}
+              max={8}
+              value={settings.interval}
+              onChange={(e) => onInterval(Number(e.target.value))}
+              className="w-16 rounded border border-panel-border bg-panel px-2 py-0.5"
+            />
+          </label>
+          <label className="flex items-center justify-between gap-2">
+            Note delay (s)
+            <input
+              type="number"
+              min={0.1}
+              max={5}
+              step={0.1}
+              value={settings.noteDelay}
+              onChange={(e) => onNoteDelay(Number(e.target.value))}
+              className="w-16 rounded border border-panel-border bg-panel px-2 py-0.5"
+            />
+          </label>
+          <label className="flex items-center justify-between gap-2">
+            Note count
+            <select
+              value={settings.noteCount}
+              onChange={(e) => onNoteCount(Number(e.target.value))}
+              className="w-16 rounded border border-panel-border bg-panel px-2 py-0.5"
+            >
+              <option value={1}>1</option>
+              <option value={2}>2</option>
+              <option value={4}>4</option>
+            </select>
+          </label>
+        </div>
+      </Card>
+
+      <Card title="Treble range">
+        <RangeRow
+          label="High"
+          note={settings.trebleRange.high.name}
+          octave={settings.trebleRange.high.octave}
+          octaveMin={3}
+          octaveMax={6}
+          onChange={(n, o) => onTrebleRange(settings.trebleRange.low, new StaffNote(n, '', o))}
+        />
+        <RangeRow
+          label="Low"
+          note={settings.trebleRange.low.name}
+          octave={settings.trebleRange.low.octave}
+          octaveMin={2}
+          octaveMax={5}
+          onChange={(n, o) => onTrebleRange(new StaffNote(n, '', o), settings.trebleRange.high)}
+        />
+      </Card>
+
+      <Card title="Bass range">
+        <RangeRow
+          label="High"
+          note={settings.bassRange.high.name}
+          octave={settings.bassRange.high.octave}
+          octaveMin={2}
+          octaveMax={5}
+          onChange={(n, o) => onBassRange(settings.bassRange.low, new StaffNote(n, '', o))}
+        />
+        <RangeRow
+          label="Low"
+          note={settings.bassRange.low.name}
+          octave={settings.bassRange.low.octave}
+          octaveMin={1}
+          octaveMax={4}
+          onChange={(n, o) => onBassRange(new StaffNote(n, '', o), settings.bassRange.high)}
+        />
+      </Card>
+    </div>
+  );
+}
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
