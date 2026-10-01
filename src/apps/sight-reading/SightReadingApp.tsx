@@ -20,9 +20,10 @@ interface NoteRange {
 
 const NOTE_OPTIONS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
 
-function freshState(producer: NoteProducer, interval: number, count: number): GameState {
+function freshState(producer: NoteProducer, interval: number, count: number): GameState 
+{
   const produced = producer.produce(interval, count);
-  console.log(produced.treble[0])
+
   return {
     trebleNotes: produced.treble,
     bassNotes: produced.bass,
@@ -32,23 +33,39 @@ function freshState(producer: NoteProducer, interval: number, count: number): Ga
   };
 }
 
-export function SightReadingApp() {
+export function SightReadingApp() 
+{
   // Settings ---------------------------------------------------------------
   const [handMode, setHandMode] = useState<HandMode>('bt');
+  const rhEnabled = handMode !== 'lh';
+  const lhEnabled = handMode !== 'rh';
+
   const [noteCount, setNoteCount] = useState(2);
   const [noteDelay, setNoteDelay] = useState(1);
   const [interval, setIntervalSize] = useState(3);
+
   const [trebleRange, setTrebleRange] = useState<NoteRange>({
     low: new StaffNote('B', '', 3),
     high: new StaffNote('A', '', 5),
   });
+
   const [bassRange, setBassRange] = useState<NoteRange>({
     low: new StaffNote('E', '', 2),
     high: new StaffNote('C', '', 4),
   });
+
   const [showLabels, setShowLabels] = useState(false);
 
   // Game state -------------------------------------------------------------
+
+  const timerRef = useRef<number | null>(null);
+  const clearTimer = useCallback(() => {
+    if (timerRef.current !== null) {
+      window.clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
   // The producer is mutable but created once; useState keeps it stable
   // across renders without constructing a throwaway instance each render.
   const [producer] = useState(
@@ -60,19 +77,9 @@ export function SightReadingApp() {
         new StaffNote('C', '', 4),
       ),
   );
+
   const [game, setGame] = useState<GameState>(() => freshState(producer, 3, 2));
-  const timerRef = useRef<number | null>(null);
-
-  const rhEnabled = handMode !== 'lh';
-  const lhEnabled = handMode !== 'rh';
-
-  const clearTimer = useCallback(() => {
-    if (timerRef.current !== null) {
-      window.clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-  }, []);
-
+  
   const produce = useCallback(
     (count: number, stepInterval: number) => {
       clearTimer();
@@ -83,12 +90,12 @@ export function SightReadingApp() {
 
   // MIDI -------------------------------------------------------------------
   const onNoteOn = useCallback(
+    // this is called when a note is played on the MIDI keyboard and the callback
+    // is called by the midi controller but also when the dependencies change, to
+    // have the same effect which is to update the game state with the new note.
     (note: StaffNote) => {
       setGame((prev) => {
         if (prev.matchCount >= noteCount) return prev;
-
-        console.log(note)
-        console.log(prev.trebleNotes)
 
         const pos = prev.matchCount;
         const trebleMatch = note.eq(prev.trebleNotes[pos]) && rhEnabled;

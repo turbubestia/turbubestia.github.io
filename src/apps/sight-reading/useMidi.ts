@@ -4,12 +4,14 @@ import { StaffNote } from './note';
 
 export type MidiStatus = 'unsupported' | 'disconnected' | 'connected';
 
-export interface UseMidiOptions {
+export interface UseMidiOptions 
+{
   onNoteOn: (note: StaffNote) => void;
   onNoteOff: (note: StaffNote) => void;
 }
 
-export interface UseMidiResult {
+export interface UseMidiResult 
+{
   devices: string[];
   status: MidiStatus;
   refresh: () => void;
@@ -22,7 +24,8 @@ export interface UseMidiResult {
  * MIDI listeners are attached once per connection and always see the latest
  * game state without re-subscribing on every render.
  */
-export function useMidi({ onNoteOn, onNoteOff }: UseMidiOptions): UseMidiResult {
+export function useMidi({ onNoteOn, onNoteOff }: UseMidiOptions): UseMidiResult 
+{
   const [devices, setDevices] = useState<string[]>([]);
   const [status, setStatus] = useState<MidiStatus>('disconnected');
   const connectedRef = useRef<Input | null>(null);
