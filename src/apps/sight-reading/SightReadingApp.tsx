@@ -35,7 +35,7 @@ export function SightReadingApp()
   return (
     <div className="p-4">
     <MidiPanel midi={midi} />
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-4 md:flex-row">
+    <div className="flex min-h-150 flex-col items-center justify-center gap-4 p-4 md:flex-row">
       {/* Settings panel */}
       <SettingsPanel
         settings={settings}
@@ -74,7 +74,7 @@ export function SightReadingApp()
     </div>
 
     {/* Keyboard (static, all-default state for this iteration) */}
-    <div>
+    <div className="flex justify-center">
       <PianoKeyboard states={DEFAULT_KEY_STATES} width={1024} />
     </div>
     </div>

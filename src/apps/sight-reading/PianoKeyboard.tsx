@@ -1,7 +1,9 @@
 import {
   buildKeyboard,
   BLACK_KEY_FILL,
+  A0_INDEX,
   C4_INDEX,
+  C8_INDEX,
   KEYBOARD_HEIGHT,
   KEYBOARD_WIDTH,
   WHITE_KEY_HEIGHT,
@@ -20,9 +22,9 @@ export interface PianoKeyboardProps {
 }
 
 // Corner radii in normalized units (a small fraction of a white key).
-const WHITE_RADIUS = WHITE_KEY_WIDTH * 0.18;
-const BLACK_RADIUS = WHITE_KEY_WIDTH * 0.12;
-const LABEL_FONT_SIZE = 0.013;
+const WHITE_RADIUS = WHITE_KEY_WIDTH * 0.25;
+const BLACK_RADIUS = WHITE_KEY_WIDTH * 0.15;
+const LABEL_FONT_SIZE = 0.012;
 
 /** Sharp top corners, rounded bottom corners for a white key. */
 function whiteKeyPath(x: number, w: number, h: number): string {
@@ -59,7 +61,9 @@ export function PianoKeyboard({ states, width = 520 }: PianoKeyboardProps) {
   const pixelWidth = width;
   const pixelHeight = width * (KEYBOARD_HEIGHT / KEYBOARD_WIDTH);
 
+  const a0CenterX = (A0_INDEX + 0.5) * WHITE_KEY_WIDTH;
   const c4CenterX = (C4_INDEX + 0.5) * WHITE_KEY_WIDTH;
+  const c8CenterX = (C8_INDEX + 0.5) * WHITE_KEY_WIDTH;
 
   return (
     <svg
@@ -75,7 +79,7 @@ export function PianoKeyboard({ states, width = 520 }: PianoKeyboardProps) {
           d={whiteKeyPath(key.x, key.width, key.height)}
           fill={key.fill}
           stroke="#9ca3af"
-          strokeWidth={0.0006}
+          strokeWidth={0.0015}
         />
       ))}
 
@@ -87,15 +91,9 @@ export function PianoKeyboard({ states, width = 520 }: PianoKeyboardProps) {
         />
       ))}
 
-      <text
-        x={c4CenterX}
-        y={WHITE_KEY_HEIGHT * 0.72}
-        fontSize={LABEL_FONT_SIZE}
-        textAnchor="middle"
-        fill="#111827"
-      >
-        C4
-      </text>
+      <text x={a0CenterX} y={WHITE_KEY_HEIGHT * 0.9} fontSize={LABEL_FONT_SIZE} textAnchor="middle" fill="#111827" > A0 </text>
+      <text x={c4CenterX} y={WHITE_KEY_HEIGHT * 0.9} fontSize={LABEL_FONT_SIZE} textAnchor="middle" fill="#111827" > C4 </text>
+      <text x={c8CenterX} y={WHITE_KEY_HEIGHT * 0.9} fontSize={LABEL_FONT_SIZE} textAnchor="middle" fill="#111827" > C8 </text>
     </svg>
   );
 }

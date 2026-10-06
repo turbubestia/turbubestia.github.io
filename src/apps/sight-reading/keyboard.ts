@@ -57,7 +57,9 @@ export const KEYBOARD_HEIGHT = WHITE_KEY_HEIGHT;
  * reference label. Derived via the StaffNote name/octave constructor rather
  * than by hand-mapping note names.
  */
+export const A0_INDEX = new StaffNote('A', '', 0).index;
 export const C4_INDEX = new StaffNote('C', '', 4).index;
+export const C8_INDEX = new StaffNote('C', '', 8).index;
 
 /** A single white key with resolved geometry and fill. */
 export interface WhiteKey {
