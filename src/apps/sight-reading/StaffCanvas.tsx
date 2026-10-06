@@ -152,5 +152,5 @@ export function StaffCanvas({
     }
   }, [trebleNotes, trebleMatches, bassNotes, bassMatches, rhEnabled, lhEnabled, showLabels]);
 
-  return <div ref={containerRef} className="mx-auto w-[250px]" />;
+  return <div ref={containerRef} className="mx-auto w-60" />;
 }

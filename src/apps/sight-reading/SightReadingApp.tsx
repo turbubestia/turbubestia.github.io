@@ -1,9 +1,13 @@
+// system
 import { useState } from 'react';
+// user logic
 import { StaffNote } from './note';
-import { useMidi } from './useMidi';
-import { StaffCanvas } from './StaffCanvas';
 import { DEFAULT_SETTINGS, type GameSettings, type HandMode } from './game';
+// react hooks
+import { useMidi } from './useMidi';
 import { useSightReadingGame } from './useSightReadingGame';
+// ui components
+import { StaffCanvas } from './StaffCanvas';
 
 const NOTE_OPTIONS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
 

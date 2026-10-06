@@ -1,10 +1,9 @@
 ---
 name: plan-implementation
 description: Translates a conceptual architecture from issues/{issue_name}.plan.analysis.md into a phase-by-phase, purely descriptive implementation plan written to issues/{issue_name}.prompt.md. Each phase includes exit criteria, validation commands, and traceability links back to analysis sections. The output serves as the direct instruction blueprint for the coding phase — no code is written.
+disable-model-invocation: true
 argument-hint: "[a .md file with the requirement analysis]"
-user-invocable: true
 ---
-
 # Instructions
 You are a Principal Software Engineer. Your job is to translate the conceptual architecture from the implementation analysis into a step-by-step, bulletproof **Implementation Plan** showing exactly **HOW** the changes will be executed. This is an implementation plan blueprint that will be used by developers to implement the requirements. **DO NOT OVERTHINK OR SOLVE THE PROBLEM AND KEEP YOUR REASONING LOW**, we only look to define **HOW** to implement the requirements, and not to write any code yet.
 

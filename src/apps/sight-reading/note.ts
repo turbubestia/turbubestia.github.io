@@ -164,6 +164,114 @@ export interface ProducedNotes
   bass: StaffNote[];
 }
 
+// Legal domain for the piano range, expressed in flat natural-note index space.
+const PIANO_LOW_BOUND = 0;
+const PIANO_HIGH_BOUND = 51;
+const PIANO_MIN_SEPARATION = 2;
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
+}
+
+/**
+ * Represents the note ranges for the left and right hands on a piano. It provides
+ * methods to adjust the range, nudge the hands so they keep at least 2 notes apart,
+ * and clamps to the keyboard boundaries (A0 to C8).
+ *
+ * The canonical state is held as four flat natural-note indices (0..51); the public
+ * `StaffNote` boundary fields are derived from that index state. All boundary math is
+ * done in index space and every mutation routes through a single normalization path.
+ */
+export class PianoRange
+{
+  public left_hand_low!: StaffNote;
+  public left_hand_high!: StaffNote;
+  public right_hand_low!: StaffNote;
+  public right_hand_high!: StaffNote;
+
+  // Canonical index-space state (single source of truth).
+  private leftLow: number;
+  private leftHigh: number;
+  private rightLow: number;
+  private rightHigh: number;
+
+  constructor() {
+    this.leftLow = new StaffNote("C", "", 3).index;
+    this.leftHigh = new StaffNote("G", "", 3).index;
+    this.rightLow = new StaffNote("C", "", 4).index;
+    this.rightHigh = new StaffNote("G", "", 4).index;
+    this.normalize();
+  }
+
+  public moveLeftHandBy(side: number, step: number): void {
+    if (side === 0) {
+      this.leftLow += step;
+    } else {
+      this.leftHigh += step;
+    }
+    this.normalize();
+  }
+
+  public moveRightHandBy(side: number, step: number): void {
+    if (side === 0) {
+      this.rightLow += step;
+    } else {
+      this.rightHigh += step;
+    }
+    this.normalize();
+  }
+
+  public moveLeftHandTo(side: number, index: number): void {
+    const current = side === 0 ? this.leftLow : this.leftHigh;
+    this.moveLeftHandBy(side, index - current);
+  }
+
+  public moveRightHandTo(side: number, index: number): void {
+    const current = side === 0 ? this.rightLow : this.rightHigh;
+    this.moveRightHandBy(side, index - current);
+  }
+
+  /**
+   * The only path by which range state is stored. Clamps each boundary into its legal
+   * sub-range, repairs per-hand low/high collisions, enforces cross-hand separation,
+   * and re-derives the public `StaffNote` fields from the normalized indices.
+   */
+  private normalize(): void {
+    // 1. Clamp each boundary into its legal sub-range.
+    this.leftLow = clamp(this.leftLow, PIANO_LOW_BOUND, PIANO_HIGH_BOUND - PIANO_MIN_SEPARATION);
+    this.leftHigh = clamp(this.leftHigh, PIANO_MIN_SEPARATION, PIANO_HIGH_BOUND);
+    this.rightLow = clamp(this.rightLow, PIANO_LOW_BOUND, PIANO_HIGH_BOUND - PIANO_MIN_SEPARATION);
+    this.rightHigh = clamp(this.rightHigh, PIANO_MIN_SEPARATION, PIANO_HIGH_BOUND);
+
+    // 2. Repair per-hand low/high collisions (restore the minimum gap).
+    if (this.leftHigh < this.leftLow + PIANO_MIN_SEPARATION) {
+      this.leftHigh = this.leftLow + PIANO_MIN_SEPARATION;
+    }
+    if (this.rightHigh < this.rightLow + PIANO_MIN_SEPARATION) {
+      this.rightHigh = this.rightLow + PIANO_MIN_SEPARATION;
+    }
+
+    // 3. Enforce cross-hand separation: the right hand stays at least MIN above the left.
+    if (this.rightLow < this.leftLow + PIANO_MIN_SEPARATION) {
+      this.rightLow = this.leftLow + PIANO_MIN_SEPARATION;
+    }
+    if (this.rightHigh < this.leftHigh + PIANO_MIN_SEPARATION) {
+      this.rightHigh = Math.min(this.leftHigh + PIANO_MIN_SEPARATION, PIANO_HIGH_BOUND);
+    }
+
+    // 4. Re-verify the right hand's internal gap after the cross-hand push.
+    if (this.rightHigh < this.rightLow + PIANO_MIN_SEPARATION) {
+      this.rightHigh = Math.min(this.rightLow + PIANO_MIN_SEPARATION, PIANO_HIGH_BOUND);
+    }
+
+    // 5. Re-derive the public StaffNote fields from the normalized indices.
+    this.left_hand_low = new StaffNote(this.leftLow);
+    this.left_hand_high = new StaffNote(this.leftHigh);
+    this.right_hand_low = new StaffNote(this.rightLow);
+    this.right_hand_high = new StaffNote(this.rightHigh);
+  }
+}
+
 /**
  * Holds the treble and bass distributions and drives the sliding window.
  * `interval` controls how far the window may drift per round (replaces the
