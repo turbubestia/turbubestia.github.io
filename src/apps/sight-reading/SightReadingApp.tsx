@@ -8,8 +8,12 @@ import { useMidi } from './useMidi';
 import { useSightReadingGame } from './useSightReadingGame';
 // ui components
 import { StaffCanvas } from './StaffCanvas';
+import { PianoKeyboard, type KeyStates } from './PianoKeyboard';
 
 const NOTE_OPTIONS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+
+// Static all-default keyboard state for this iteration (no hand-range derivation).
+const DEFAULT_KEY_STATES: KeyStates = new Array(52).fill('default');
 
 export function SightReadingApp() 
 {
@@ -67,6 +71,11 @@ export function SightReadingApp()
           {showLabels ? 'Hide notes' : 'Show notes'}
         </button>
       </div>
+    </div>
+
+    {/* Keyboard (static, all-default state for this iteration) */}
+    <div>
+      <PianoKeyboard states={DEFAULT_KEY_STATES} width={1024} />
     </div>
     </div>
   );
