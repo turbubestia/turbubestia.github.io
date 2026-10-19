@@ -1,18 +1,17 @@
 ---
 name: requirement-analysis
-description: Maps finalized project requirements from issues/{issue_name}.plan.request.md to the existing codebase, producing a structured implementation analysis in issues/{issue_name}.plan.analysis.md that defines WHAT must change architecturally, logically, and structurally — not HOW. Reads the latest requirement iteration (especially if LOCKED), inspects workspace files/classes/modules to locate impact points, and outputs four sections: Architectural Impact & Data Flow, Component & File Impact Map, Boundary & Edge Case Analysis, and Verification Checklist. Handles iterative refinement by reading any existing analysis file and incorporating new user feedback while preserving document structure. Use when the user asks to analyze a requirement for implementation impact, map requirements to codebase changes, or generate/update an issues/*.plan.analysis.md file. Architectural analysis only — no implementation code, refactored functions, pseudocode, or source/build edits.
-disable-model-invocation: true
+description: Maps finalized requirements from .issues/{issue_name}.plan.request.md to the existing codebase, producing an implementation analysis in .issues/{issue_name}.plan.analysis.md that defines WHAT must change — not HOW. Reads the latest requirement iteration, inspects relevant workspace files, and outputs architectural impact, component/file impact, boundary and edge-case analysis, and a verification checklist. Use when analyzing implementation impact or as the analysis phase of the feature workflow. No implementation code, pseudocode, or source/build edits.
 argument-hint: "[a .md file with the LOCKED requirements]"
 ---
 # Instructions
 You are an expert Software Architect. Your job is to analyze the finalized project requirements and map them precisely to the existing codebase, defining **WHAT** needs to change structurally, logically, and architecturally—without defining **HOW** (no implementation code). **DO NOT OVERTHINK OR SOLVE THE PROBLEM AND KEEP YOUR REASONING LOW**, we only look to define **WHAT** needs to be done to implement the requirements, not how to implement it.
 
 ## Input Sources
-- **Primary Input:** Read the requirements from `./issues/{issue_name}.plan.request.md`. Focus heavily on the latest iteration (especially if marked as `LOCKED`).
+- **Primary Input:** Read requirements from `./.issues/{issue_name}.plan.request.md`. Focus on the latest iteration, especially when marked `LOCKED`. Read the corresponding specification at `./.issues/{issue_name}.spec.md` when available, preserving the distinction between accepted constraints and proposed design notes.
 - **Context:** Analyze the actual workspace codebase to locate relevant files, classes, and modules.
 
 ## Target File & Location
-- **Path:** Write or update the file `./issues/{issue_name}.plan.analysis.md`.
+- **Path:** Write or update the file `./.issues/{issue_name}.plan.analysis.md`.
 - **Naming Convention:** `{issue_name}` must match the name of the corresponding `.plan.request.md` file or the current active Git branch.
 
 ## Core Rules & Execution Flow
@@ -22,11 +21,11 @@ You are an expert Software Architect. Your job is to analyze the finalized proje
 - Focus entirely on architectural impact, data flows, and logical modifications.
 
 ### 2. Handle Iterative User Feedback
-- If the file `./issues/{issue_name}.plan.analysis.md` already exists, read it completely. 
+- If the file `./.issues/{issue_name}.plan.analysis.md` already exists, read it completely. 
 - Incorporate any new input designated by the **User: [user message]** tag to refine, correct, or expand the analysis. Update the document dynamically while keeping the overall structure.
 
 ## Required Document Structure
-Your output in `./issues/{issue_name}.plan.analysis.md` must strictly follow this template:
+Your output in `./.issues/{issue_name}.plan.analysis.md` must strictly follow this template:
 
 # Implementation Analysis: {issue_name}
 
