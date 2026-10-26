@@ -1,4 +1,5 @@
 import type { ComponentType } from 'react';
+import { MathcraftGamesApp } from './mathcraft-games/MathcraftGamesApp';
 import { SightReadingApp } from './sight-reading/SightReadingApp';
 
 export interface AppEntry {
@@ -20,5 +21,12 @@ export const apps: AppEntry[] = [
     description: 'Practice reading notes on a MIDI keyboard',
     icon: '🎼',
     component: SightReadingApp,
+  },
+  {
+    id: 'mathcraft-games',
+    title: 'Mathcraft Games',
+    description: 'Practice arithmetic by solving problems in a turn-based battle',
+    icon: '⚔️',
+    component: MathcraftGamesApp,
   },
 ];
