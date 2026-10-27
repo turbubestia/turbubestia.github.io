@@ -5,8 +5,9 @@
 // reward selection within the current tier bucket.
 
 import weaponsManifest from '../assets/weapons/assets.json';
-import { REWARD_CADENCE } from './rules';
 export type EquipmentCategory = 'hand-weapon' | 'bow';
+
+export const REWARD_TIER_SOLVE_INTERVAL = 3;
 
 export const EQUIPMENT_CATEGORIES: readonly EquipmentCategory[] = ['hand-weapon', 'bow'];
 
@@ -80,12 +81,12 @@ const legacyCompatibilityCatalog: readonly EquipmentItem[] = [
 export const EQUIPMENT_CATALOG: readonly EquipmentItem[] = [...manifestCatalog, ...legacyCompatibilityCatalog];
 
 function rewardTierFromSolvedCount(solvedCount: number): number {
-  return Math.floor(solvedCount / REWARD_CADENCE);
+  return Math.max(1, Math.floor(solvedCount / REWARD_TIER_SOLVE_INTERVAL));
 }
 
 /**
  * Select a random item from the category's current tier bucket.
- * A reward is available only once the tier counter has advanced beyond 0.
+ * Timed rewards use the first tier until solved-count progression advances it.
  */
 export function selectRewardItem(
   category: EquipmentCategory,
@@ -93,10 +94,6 @@ export function selectRewardItem(
   randomFn: () => number = Math.random,
 ): EquipmentItem | null {
   const tier = rewardTierFromSolvedCount(solvedCount);
-  if (tier <= 0) {
-    return null;
-  }
-
   const candidates = EQUIPMENT_CATALOG.filter(
     (item) => item.source !== 'legacy' && item.category === category && item.tier === tier,
   );

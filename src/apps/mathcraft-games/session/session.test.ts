@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import type { ProblemConfig } from '../math';
 import { createSeededRandom } from '../math';
 import { EQUIPMENT_CATEGORIES } from '../game/equipment';
-import { REWARD_CADENCE } from '../game/rules';
 import { createSession, ManualTimeSource, type SessionCoordinator } from './session';
 
 // Single-step problem config: every generated problem has exactly one step, so a
@@ -140,6 +139,120 @@ describe('session: start guard (MGP4-01)', () => {
     const { session } = makeSession({ durationMinutes: 2, enabledConfigs: [addConfig] }, 1);
     session.start();
     expect(session.start()).toEqual({ ok: false, reason: 'already-started' });
+  });
+});
+
+describe('session: timed rewards', () => {
+  it('offers ten selectable rewards across five minutes of reward time', () => {
+    const { session, time } = makeSession({ durationMinutes: 5, enabledConfigs: [addConfig] }, 7);
+    session.start();
+
+    for (let offerIndex = 0; offerIndex < 10; offerIndex += 1) {
+      pump(time, session, 30_000, 30_000);
+      solveCurrent(session);
+
+      const category = EQUIPMENT_CATEGORIES.find((entry) => session.gameState.pendingReward?.[entry] !== null);
+      expect(category).toBeDefined();
+      expect(session.equip(category!)).toBe(true);
+      session.advance();
+    }
+
+    expect(session.currentState.kind).toBe('boss-fight');
+    expect(session.getSummary().equipmentEarned).toBe(10);
+  });
+
+  it('offers a reward when a due interval reaches the problem solve, before advance', () => {
+    const { session, time } = makeSession({ durationMinutes: 10, enabledConfigs: [multiAddConfig] }, 7);
+    session.start();
+
+    step(time, session, 30_000);
+    expect(session.gameState.pendingReward).toBeNull();
+
+    solveCurrent(session);
+
+    expect(session.awaitingAdvance).toBe(true);
+    expect(session.gameState.pendingReward).not.toBeNull();
+    expect(session.activeProblem).not.toBeNull();
+  });
+
+  it('coalesces multiple expirations during one problem into one offer', () => {
+    const { session, time } = makeSession({ durationMinutes: 10, enabledConfigs: [multiAddConfig] }, 7);
+    session.start();
+    pump(time, session, 90_000, 30_000);
+
+    solveCurrent(session);
+    expect(session.gameState.pendingReward).not.toBeNull();
+
+    const category = EQUIPMENT_CATEGORIES.find((entry) => session.gameState.pendingReward?.[entry] !== null);
+    expect(category).toBeDefined();
+    expect(session.equip(category!)).toBe(true);
+    expect(session.gameState.pendingReward).toBeNull();
+  });
+
+  it('offers a reward immediately when an interval expires during solved review', () => {
+    const { session, time } = makeSession({ durationMinutes: 10, enabledConfigs: [addConfig] }, 1);
+    session.start();
+    solveCurrent(session);
+    expect(session.awaitingAdvance).toBe(true);
+    expect(session.gameState.pendingReward).toBeNull();
+
+    step(time, session, 30_000);
+
+    expect(session.gameState.pendingReward).not.toBeNull();
+  });
+
+  it('pauses reward time during manual pauses', () => {
+    const { session, time } = makeSession({ durationMinutes: 10, enabledConfigs: [addConfig] }, 1);
+    session.start();
+    step(time, session, 20_000);
+    session.pause();
+    step(time, session, 60_000);
+    session.resume();
+    step(time, session, 9_999);
+    solveCurrent(session);
+    expect(session.gameState.pendingReward).toBeNull();
+
+    step(time, session, 1);
+
+    expect(session.gameState.pendingReward).not.toBeNull();
+  });
+
+  it('pauses reward time during idle pauses', () => {
+    const { session, time } = makeSession({ durationMinutes: 10, enabledConfigs: [addConfig] }, 1);
+    session.start();
+    step(time, session, 60_000);
+    expect(session.currentState.kind).toBe('idle-paused');
+    step(time, session, 15_000);
+    session.resume();
+    solveCurrent(session);
+    expect(session.gameState.pendingReward).not.toBeNull();
+    const category = EQUIPMENT_CATEGORIES.find((entry) => session.gameState.pendingReward?.[entry] !== null);
+    expect(category).toBeDefined();
+    session.equip(category!);
+    session.advance();
+
+    step(time, session, 15_000);
+    solveCurrent(session);
+
+    expect(session.gameState.pendingReward).toBeNull();
+  });
+
+  it('continues reward time during a boss fight', () => {
+    const { session, time } = makeSession({ durationMinutes: 10, enabledConfigs: [addConfig] }, 5);
+    session.start();
+    pump(time, session, 300_000);
+    solveCurrent(session);
+    expect(session.gameState.pendingReward).not.toBeNull();
+    session.equip('hand-weapon');
+    session.advance();
+    expect(session.currentState.kind).toBe('boss-fight');
+
+    step(time, session, 30_000);
+    solveCurrent(session);
+
+    expect(session.gameState.pendingReward).not.toBeNull();
+    expect(session.equip('hand-weapon')).toBe(true);
+    expect(session.getSummary().equipmentEarned).toBe(2);
   });
 });
 
@@ -446,25 +559,6 @@ describe('session: defeat / respawn (MGP4-04)', () => {
     expect(session.currentState.kind).toBe('active');
     solveActive(session); // finish the active problem -> session-ending boss appears
     expect(session.currentState.kind).toBe('boss-fight');
-  });
-});
-
-describe('session: rewards during boss (MGP4-04)', () => {
-  it('fires the normal reward cadence during a boss fight', () => {
-    const { session, time } = makeSession({ durationMinutes: 10, enabledConfigs: [addConfig] }, 5);
-    session.start();
-    const rewardSolveCount = Math.ceil(5 / REWARD_CADENCE) * REWARD_CADENCE;
-    for (let i = 0; i < rewardSolveCount - 1; i += 1) {
-      solveActive(session);
-    }
-    pump(time, session, 300_000); // boss becomes pending
-    solveActive(session); // the reward milestone also starts the boss
-    expect(session.currentState.kind).toBe('boss-fight');
-    expect(session.gameState.pendingReward).not.toBeNull();
-    const rewardCategory = EQUIPMENT_CATEGORIES.find((category) => session.gameState.pendingReward?.[category] !== null);
-    expect(rewardCategory).toBeDefined();
-    expect(session.equip(rewardCategory!)).toBe(true);
-    expect(session.getSummary().equipmentEarned).toBe(1);
   });
 });
 

@@ -8,9 +8,9 @@ import {
 } from './equipment';
 
 describe('equipment: reward selection', () => {
-  it('returns null when the active tier has no eligible items', () => {
-    expect(selectRewardItem('hand-weapon', 2)).toBeNull();
-    expect(selectRewardItem('bow', 0)).toBeNull();
+  it('uses the first item tier for early timed rewards', () => {
+    expect(selectRewardItem('hand-weapon', 2)?.tier).toBe(1);
+    expect(selectRewardItem('bow', 0)?.tier).toBe(1);
   });
 
   it('selects a random item from the matching tier bucket', () => {

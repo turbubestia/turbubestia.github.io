@@ -147,7 +147,7 @@ The student finishes the active problem before a due boss appears. For a schedul
 
 Each boss has three hearts and requires three solved problems to defeat. When a boss becomes due, the math domain prepares the next three problems as a queue. Each queued problem corresponds to one boss heart, and its correct-hit damage budget supplies that heart’s health. Correct hit events damage the current heart; the solved event completes that heart’s problem and advances the fight to the next queued problem/heart. The game does not need to know the queued problems’ operations. Starting and ending the encounter are communicated using `boss_start` and `boss_end` events.
 
-Boss triggers that occur while one boss is already pending are coalesced into a single pending boss rather than stacked as overlapping encounters. If a scheduled five-minute trigger coincides with session expiration, it is one boss encounter, not two. A reward may become available during a boss fight under the normal completed-problem reward rule.
+Boss triggers that occur while one boss is already pending are coalesced into a single pending boss rather than stacked as overlapping encounters. If a scheduled five-minute trigger coincides with session expiration, it is one boss encounter, not two. The reward timer continues during boss fights; a reward that becomes due while a problem is in progress is offered when that problem is solved.
 
 ## Equipment and Progression
 
@@ -157,7 +157,7 @@ The hero display has three equipment slots:
 - Armor
 - Bow
 
-After every fifth completed problem, the student is offered three random items: one hand weapon, one armor item, and one bow. The student chooses one item. It replaces the currently equipped item in that category. Incorrect attempts do not affect the completed-problem count or reward cadence. Rewards may be offered during a boss fight.
+Every 30 seconds, the student is offered a choice of one hand weapon or one bow. Five minutes of reward-clock time provides 10 reward opportunities. The reward clock pauses during manual and idle pauses, but continues during boss fights. If a reward becomes due while a problem is unsolved, it is offered as soon as the problem is solved; if it becomes due during solved review, it is offered immediately. Multiple expirations during one unsolved problem coalesce into one offer. Item tiers continue to progress with completed-problem count, and early offers use the first tier.
 
 Equipment tier scales with math level, defined as the number of completed problems. Items display the following stats:
 

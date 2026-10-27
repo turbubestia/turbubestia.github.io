@@ -21,7 +21,6 @@ import {
 export const HERO_MAX_HEALTH = 12;
 export const RESPAWN_HEALTH = 8;
 export const SOLVED_HEAL_AMOUNT = 1;
-export const REWARD_CADENCE = 3;
 
 export interface HeroState {
   health: number;
@@ -141,6 +140,11 @@ export class GameRules {
     return offer;
   }
 
+  /** Create a timed reward offer using the current solved-count tier. */
+  offerReward(): void {
+    this.pendingReward = generateRewardOffer(this.solvedCount);
+  }
+
   /** Advance the active encounter after the solved problem is explicitly continued. */
   advanceEncounter(): void {
     if (this.encounter.kind === 'boss') {
@@ -186,10 +190,6 @@ export class GameRules {
     this.hero.health = Math.min(this.hero.maxHealth, this.hero.health + SOLVED_HEAL_AMOUNT);
 
     this.solvedCount += 1;
-    if (this.solvedCount % REWARD_CADENCE === 0) {
-      this.pendingReward = generateRewardOffer(this.solvedCount);
-    }
-
   }
 
   private applyBossStart(queuedProblems: number, hearts: readonly BossHeartInit[]): void {

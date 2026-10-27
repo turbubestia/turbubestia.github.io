@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { MathEvent } from '../math/lifecycle';
-import { GameRules, HERO_MAX_HEALTH, REWARD_CADENCE, RESPAWN_HEALTH } from './rules';
+import { REWARD_TIER_SOLVE_INTERVAL } from './equipment';
+import { GameRules, HERO_MAX_HEALTH, RESPAWN_HEALTH } from './rules';
 
 const correctHit = (value: number): MathEvent => ({
   type: 'hit',
@@ -226,25 +227,41 @@ describe('game rules: boss progression', () => {
   });
 });
 
-describe('game rules: reward cadence and decorative stats', () => {
-  it('offers a reward at the configured solved-problem cadence', () => {
+describe('game rules: timed reward offers and decorative stats', () => {
+  it('does not offer a reward automatically when a problem is solved', () => {
     const game = new GameRules();
-    for (let i = 0; i < REWARD_CADENCE - 1; i += 1) {
+    for (let i = 0; i < REWARD_TIER_SOLVE_INTERVAL; i += 1) {
       game.applyEvent(solved());
-      expect(game.state.pendingReward).toBeNull();
     }
 
-    game.applyEvent(solved());
-    expect(game.state.pendingReward).not.toBeNull();
-    expect(game.state.solvedCount).toBe(REWARD_CADENCE);
+    expect(game.state.pendingReward).toBeNull();
+    expect(game.state.solvedCount).toBe(REWARD_TIER_SOLVE_INTERVAL);
+  });
+
+  it('creates a non-empty first-tier offer at an early solved count', () => {
+    const game = new GameRules();
+
+    game.offerReward();
+
+    expect(game.state.pendingReward?.['hand-weapon']?.tier).toBe(1);
+    expect(game.state.pendingReward?.bow?.tier).toBe(1);
+  });
+
+  it('advances the offered tier with solved-count progression', () => {
+    const game = new GameRules();
+    for (let i = 0; i < REWARD_TIER_SOLVE_INTERVAL * 2; i += 1) {
+      game.applyEvent(solved());
+    }
+
+    game.offerReward();
+
+    expect(game.state.pendingReward?.['hand-weapon']?.tier).toBe(2);
+    expect(game.state.pendingReward?.bow?.tier).toBe(2);
   });
 
   it('selecting an item replaces only that category and consumes the reward', () => {
     const game = new GameRules();
-    const firstEquipableRewardCount = REWARD_CADENCE;
-    for (let i = 0; i < firstEquipableRewardCount; i += 1) {
-      game.applyEvent(solved());
-    }
+    game.offerReward();
 
     const equipped = game.equipItem('hand-weapon');
     expect(equipped).not.toBeNull();
@@ -260,10 +277,7 @@ describe('game rules: reward cadence and decorative stats', () => {
 
   it('keeps decorative display stats separate from combat outcomes', () => {
     const withGear = new GameRules();
-    const firstEquipableRewardCount = REWARD_CADENCE;
-    for (let i = 0; i < firstEquipableRewardCount; i += 1) {
-      withGear.applyEvent(solved());
-    }
+    withGear.offerReward();
     withGear.equipItem('hand-weapon');
 
     const bare = new GameRules();

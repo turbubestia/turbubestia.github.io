@@ -8,7 +8,7 @@
 // Boundary rules (see .issues/math-games-stage-4-session-coordination.plan.analysis.md):
 // - It drives the math and game domains only through their public APIs
 //   (`generateProblem`, `presentProblem`, `GameRules`) and observes their emitted
-//   events/state. It never re-implements damage routing, healing, reward cadence,
+//   events/state. It never re-implements damage routing, healing, reward selection,
 //   answer validation, or problem generation.
 // - All time-dependent behavior flows through an injected/controllable time source.
 //   The coordinator never reads wall-clock time; tests advance time deterministically.
@@ -25,6 +25,7 @@ export const SESSION_DURATIONS_MINUTES = [2, 5, 10] as const;
 export type SessionDurationMinutes = (typeof SESSION_DURATIONS_MINUTES)[number];
 
 const MINUTE_MS = 60_000;
+const REWARD_INTERVAL_MS = 30_000;
 /** One minute without keyboard input pauses the session ("Still There"). */
 const IDLE_LIMIT_MS = MINUTE_MS;
 /** A boss becomes due at each five-minute active-time checkpoint. */
@@ -299,6 +300,8 @@ export class SessionCoordinator {
 
   // Time clocks owned by the coordinator.
   private activeTimeMs = 0;
+  private rewardElapsedMs = 0;
+  private rewardPending = false;
   private idleMs = 0;
   private nextCheckpointMs = BOSS_CHECKPOINT_MS;
 
@@ -555,6 +558,17 @@ export class SessionCoordinator {
       return;
     }
 
+    if (this.state.kind !== 'manual-paused' && this.state.kind !== 'idle-paused') {
+      this.rewardElapsedMs += ms;
+      while (this.rewardElapsedMs >= REWARD_INTERVAL_MS) {
+        this.rewardElapsedMs -= REWARD_INTERVAL_MS;
+        this.rewardPending = true;
+      }
+      if (this.isAwaitingAdvance) {
+        this.presentDueReward();
+      }
+    }
+
     // Active time accumulates while active and during the (decorative) defeat
     // decision; it is excluded during manual pause, idle pause, and boss fights.
     if (this.state.kind === 'active' || this.state.kind === 'defeat') {
@@ -777,8 +791,8 @@ export class SessionCoordinator {
 
   /**
    * Equip the offered item for a category, delegating to the game domain. The
-   * reward cadence itself is owned by the game domain and fires normally during
-   * boss fights. Returns true when an item was equipped.
+  * timed reward cadence is owned by this coordinator and continues during boss
+  * fights. Returns true when an item was equipped.
    */
   equip(category: EquipmentCategory): boolean {
     const equipped = this.equipInternal(category);
@@ -794,6 +808,14 @@ export class SessionCoordinator {
       return true;
     }
     return false;
+  }
+
+  private presentDueReward(): void {
+    if (!this.rewardPending) {
+      return;
+    }
+    this.game.offerReward();
+    this.rewardPending = false;
   }
 
   // ---------------------------------------------------------------------------
@@ -1023,6 +1045,7 @@ export class SessionCoordinator {
         break;
       case 'solved':
         this.questionsCompleted += 1;
+        this.presentDueReward();
         break;
       case 'boss_start':
       case 'boss_end':
