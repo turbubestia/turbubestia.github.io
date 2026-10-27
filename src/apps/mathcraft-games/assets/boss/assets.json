@@ -1,0 +1,6 @@
+[
+  { "name": "Elder Guardian", "filename": "Elder_Guardian_JE2_BE2.png", "tier": 1 },
+  { "name": "Wither", "filename": "Wither_JE2_BE2.png", "tier": 2 },
+  { "name": "Ender Dragon", "filename": "Ender_Dragon_JE1_BE1.png", "tier": 3 },
+  { "name": "Warden", "filename": "Warden.png", "tier": 4 }
+]

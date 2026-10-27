@@ -1,0 +1,16 @@
+[
+  { "name": "Steve in Diamond Armor", "filename": "288px-Steve_in_diamond_armor.png", "type": "armor", "tier": 6, "value": 20 },
+  { "name": "Steve in Iron Armor", "filename": "288px-Steve_in_iron_armor.png", "type": "armor", "tier": 5, "value": 15 },
+  { "name": "Steve in Leather Armor", "filename": "289px-Steve_in_leather_armor.png", "type": "armor", "tier": 1, "value": 7 },
+  { "name": "Steve in Netherite Armor", "filename": "289px-Steve_in_netherite_armor.png", "type": "armor", "tier": 7, "value": 20 },
+  { "name": "Steve in Copper Armor", "filename": "290px-Steve_in_copper_armor.png", "type": "armor", "tier": 4, "value": 13 },
+  { "name": "Steve in Golden Armor", "filename": "290px-Steve_in_golden_armor.png", "type": "armor", "tier": 2, "value": 11 },
+  { "name": "Steve in Chainmail Armor", "filename": "291px-Steve_in_chainmail_armor.png", "type": "armor", "tier": 3, "value": 12 },
+  { "name": "Alex in Copper Armor", "filename": "292px-Alex_in_copper_armor.png", "type": "armor", "tier": 4, "value": 13 },
+  { "name": "Alex in Diamond Armor", "filename": "292px-Alex_in_diamond_armor.png", "type": "armor", "tier": 6, "value": 20 },
+  { "name": "Alex in Golden Armor", "filename": "292px-Alex_in_golden_armor.png", "type": "armor", "tier": 2, "value": 11 },
+  { "name": "Alex in Iron Armor", "filename": "292px-Alex_in_iron_armor.png", "type": "armor", "tier": 5, "value": 15 },
+  { "name": "Alex in Chainmail Armor", "filename": "295px-Alex_in_chainmail_armor.png", "type": "armor", "tier": 3, "value": 12 },
+  { "name": "Alex in Leather Armor", "filename": "295px-Alex_in_leather_armor.png", "type": "armor", "tier": 1, "value": 7 },
+  { "name": "Alex in Netherite Armor", "filename": "296px-Alex_in_netherite_armor.png", "type": "armor", "tier": 7, "value": 20 }
+]

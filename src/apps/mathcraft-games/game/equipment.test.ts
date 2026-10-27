@@ -8,42 +8,25 @@ import {
 } from './equipment';
 
 describe('equipment: reward selection', () => {
-  it('returns null when no item in the category is unlocked', () => {
-    expect(selectRewardItem('hand-weapon', 4)).toBeNull();
-    expect(selectRewardItem('armor', 0)).toBeNull();
+  it('returns null when the active tier has no eligible items', () => {
+    expect(selectRewardItem('hand-weapon', 2)).toBeNull();
+    expect(selectRewardItem('bow', 0)).toBeNull();
   });
 
-  it('selects the highest-power item whose tier is at or below the solved count', () => {
-    expect(selectRewardItem('hand-weapon', 5)?.name).toBe('Wooden Sword');
-    expect(selectRewardItem('hand-weapon', 9)?.name).toBe('Wooden Sword');
-    expect(selectRewardItem('hand-weapon', 10)?.name).toBe('Iron Sword');
-    expect(selectRewardItem('hand-weapon', 14)?.name).toBe('Iron Sword');
-    expect(selectRewardItem('hand-weapon', 15)?.name).toBe('Diamond Sword');
-    expect(selectRewardItem('hand-weapon', 20)?.name).toBe('Diamond Sword');
+  it('selects a random item from the matching tier bucket', () => {
+    const tierOneWeapon = selectRewardItem('hand-weapon', 3, () => 0);
+    expect(tierOneWeapon?.tier).toBe(1);
+    expect(tierOneWeapon?.category).toBe('hand-weapon');
+
+    const tierTwoBow = selectRewardItem('bow', 6, () => 0.99);
+    expect(tierTwoBow?.tier).toBe(2);
+    expect(tierTwoBow?.category).toBe('bow');
   });
 
-  it('selects the highest-power item for each category at the tier boundaries', () => {
-    const atFive = generateRewardOffer(5);
-    expect(atFive['hand-weapon']?.name).toBe('Wooden Sword');
-    expect(atFive.armor?.name).toBe('Leather Armor');
-    expect(atFive.bow?.name).toBe('Wooden Bow');
-
-    const atTen = generateRewardOffer(10);
-    expect(atTen['hand-weapon']?.name).toBe('Iron Sword');
-    expect(atTen.armor?.name).toBe('Chainmail');
-    expect(atTen.bow?.name).toBe('Crossbow');
-
-    const atFifteen = generateRewardOffer(15);
-    expect(atFifteen['hand-weapon']?.name).toBe('Diamond Sword');
-    expect(atFifteen.armor?.name).toBe('Diamond Armor');
-    expect(atFifteen.bow?.name).toBe('Enchanted Bow');
-  });
-
-  it('offers one candidate per category', () => {
-    const offer = generateRewardOffer(15);
-    expect(offer['hand-weapon']).not.toBeNull();
-    expect(offer.armor).not.toBeNull();
-    expect(offer.bow).not.toBeNull();
+  it('offers one candidate per category from the current tier bucket', () => {
+    const offer = generateRewardOffer(3, () => 0);
+    expect(offer['hand-weapon']?.tier).toBe(1);
+    expect(offer.bow?.tier).toBe(1);
   });
 });
 
@@ -52,23 +35,19 @@ describe('equipment: display stats', () => {
     expect(computeDisplayStats(EMPTY_LOADOUT, 10)).toEqual({ damage: 0, defense: 0, level: 0 });
   });
 
-  it('averages hand-weapon and bow power for damage and uses armor for defense', () => {
+  it('averages hand-weapon and bow power for damage and sets defense to zero', () => {
     const loadout = {
       'hand-weapon': EQUIPMENT_CATALOG.find((item) => item.id === 'iron-sword')!,
-      armor: EQUIPMENT_CATALOG.find((item) => item.id === 'chainmail')!,
       bow: EQUIPMENT_CATALOG.find((item) => item.id === 'crossbow')!,
     };
-    // Iron Sword (7) + Crossbow (7) averaged = 7 damage; Chainmail (7) defense.
-    expect(computeDisplayStats(loadout, 10)).toEqual({ damage: 7, defense: 7, level: 140 });
+    expect(computeDisplayStats(loadout, 10)).toEqual({ damage: 7, defense: 0, level: 70 });
   });
 
-  it('computes level as (damage + defense) x math level', () => {
+  it('computes level from weapon and bow damage only', () => {
     const loadout = {
       'hand-weapon': EQUIPMENT_CATALOG.find((item) => item.id === 'wooden-sword')!,
-      armor: null,
       bow: null,
     };
-    // Wooden Sword (3) + no bow (0) averaged = 1.5 damage; no armor = 0 defense.
     expect(computeDisplayStats(loadout, 4)).toEqual({ damage: 1.5, defense: 0, level: 6 });
   });
 });

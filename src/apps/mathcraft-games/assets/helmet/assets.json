@@ -1,0 +1,9 @@
+[
+  { "name": "Chainmail Helmet", "filename": "Chainmail_Helmet_JE3_BE2.png", "type": "armor", "tier": 3, "value": 2 },
+  { "name": "Copper Helmet", "filename": "Copper_Helmet_JE1_BE1.png", "type": "armor", "tier": 4, "value": 2 },
+  { "name": "Diamond Helmet", "filename": "Diamond_Helmet_JE2_BE2.png", "type": "armor", "tier": 6, "value": 3 },
+  { "name": "Golden Helmet", "filename": "Golden_Helmet_JE2_BE2.png", "type": "armor", "tier": 2, "value": 2 },
+  { "name": "Iron Helmet", "filename": "Iron_Helmet_JE2_BE2.png", "type": "armor", "tier": 5, "value": 2 },
+  { "name": "Leather Cap", "filename": "Leather_Cap_JE4_BE2.png", "type": "armor", "tier": 1, "value": 1 },
+  { "name": "Turtle Shell", "filename": "Turtle_Shell_JE1_BE1.png", "type": "armor", "tier": 3, "value": 2 }
+]

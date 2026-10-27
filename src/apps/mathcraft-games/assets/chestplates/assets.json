@@ -1,0 +1,9 @@
+[
+  { "name": "Chainmail Chestplate", "filename": "Chainmail_Chestplate_JE3_BE2.png", "type": "armor", "tier": 3, "value": 5 },
+  { "name": "Copper Chestplate", "filename": "Copper_Chestplate_JE1_BE1.png", "type": "armor", "tier": 4, "value": 5 },
+  { "name": "Diamond Chestplate", "filename": "Diamond_Chestplate_JE3_BE2.png", "type": "armor", "tier": 6, "value": 8 },
+  { "name": "Golden Chestplate", "filename": "Golden_Chestplate_JE2_BE2.png", "type": "armor", "tier": 2, "value": 5 },
+  { "name": "Iron Chestplate", "filename": "Iron_Chestplate_JE2_BE2.png", "type": "armor", "tier": 5, "value": 6 },
+  { "name": "Leather Tunic", "filename": "Leather_Tunic_JE4_BE2.png", "type": "armor", "tier": 1, "value": 3 },
+  { "name": "Netherite Chestplate", "filename": "Netherite_Chestplate_JE2_BE1.png", "type": "armor", "tier": 7, "value": 8 }
+]

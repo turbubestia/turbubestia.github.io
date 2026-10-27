@@ -241,15 +241,14 @@ describe('game rules: reward cadence and decorative stats', () => {
 
   it('selecting an item replaces only that category and consumes the reward', () => {
     const game = new GameRules();
-    const firstEquipableRewardCount = Math.ceil(5 / REWARD_CADENCE) * REWARD_CADENCE;
+    const firstEquipableRewardCount = REWARD_CADENCE;
     for (let i = 0; i < firstEquipableRewardCount; i += 1) {
       game.applyEvent(solved());
     }
 
-    const equipped = game.equipItem('armor');
+    const equipped = game.equipItem('hand-weapon');
     expect(equipped).not.toBeNull();
-    expect(game.state.loadout.armor?.name).toBe('Leather Armor');
-    expect(game.state.loadout['hand-weapon']).toBeNull();
+    expect(game.state.loadout['hand-weapon']?.tier).toBe(1);
     expect(game.state.loadout.bow).toBeNull();
     expect(game.state.pendingReward).toBeNull();
   });
@@ -261,7 +260,7 @@ describe('game rules: reward cadence and decorative stats', () => {
 
   it('keeps decorative display stats separate from combat outcomes', () => {
     const withGear = new GameRules();
-    const firstEquipableRewardCount = Math.ceil(5 / REWARD_CADENCE) * REWARD_CADENCE;
+    const firstEquipableRewardCount = REWARD_CADENCE;
     for (let i = 0; i < firstEquipableRewardCount; i += 1) {
       withGear.applyEvent(solved());
     }

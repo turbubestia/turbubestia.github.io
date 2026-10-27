@@ -1,0 +1,20 @@
+[
+  { "name": "Bow", "filename": "Bow_JE2_BE1.png", "type": "range", "tier": 1, "value": 6 },
+  { "name": "Copper Axe", "filename": "Copper_Axe_JE1_BE1.png", "type": "mele", "tier": 3, "value": 8 },
+  { "name": "Copper Sword", "filename": "Copper_Sword_JE1_BE1.png", "type": "mele", "tier": 3, "value": 5 },
+  { "name": "Crossbow", "filename": "Crossbow.png", "type": "range", "tier": 2, "value": 8 },
+  { "name": "Diamond Sword", "filename": "Diamond_Sword_JE3_BE3.png", "type": "mele", "tier": 5, "value": 7 },
+  { "name": "Golden Axe", "filename": "Golden_Axe_JE3_BE2.png", "type": "mele", "tier": 1, "value": 7 },
+  { "name": "Golden Sword", "filename": "Golden_Sword_JE3_BE2.png", "type": "mele", "tier": 1, "value": 4 },
+  { "name": "Copper Spear", "filename": "Held_Copper_Spear_JE2_BE1.png", "type": "mele", "tier": 3, "value": 6 },
+  { "name": "Diamond Spear", "filename": "Held_Diamond_Spear_JE2_BE1.png", "type": "mele", "tier": 5, "value": 8 },
+  { "name": "Iron Spear", "filename": "Held_Iron_Spear_JE2_BE1.png", "type": "mele", "tier": 4, "value": 7 },
+  { "name": "Stone Spear", "filename": "Held_Stone_Spear_JE2_BE1.png", "type": "mele", "tier": 2, "value": 5 },
+  { "name": "Iron Axe", "filename": "Iron_Axe_JE5_BE2.png", "type": "mele", "tier": 4, "value": 9 },
+  { "name": "Iron Sword", "filename": "Iron_Sword_JE2_BE2.png", "type": "mele", "tier": 4, "value": 6 },
+  { "name": "Mace", "filename": "Mace_JE1_BE1.png", "type": "mele", "tier": 6, "value": 6 },
+  { "name": "Netherite Helmet", "filename": "Netherite_Helmet_JE2_BE1.png", "type": "armor", "tier": 7, "value": 3 },
+  { "name": "Stone Axe", "filename": "Stone_Axe_JE2_BE2.png", "type": "mele", "tier": 2, "value": 9 },
+  { "name": "Trident", "filename": "Trident_(item)_JE2_BE1.png", "type": "range", "tier": 5, "value": 9 },
+  { "name": "Wooden Axe", "filename": "Wooden_Axe_JE2_BE2.png", "type": "mele", "tier": 1, "value": 7 }
+]

@@ -8,6 +8,7 @@ import { ProblemWorkDisplay } from './ProblemWorkDisplay';
 
 const singleAdd: ProblemConfig = { operation: 'addition', leftDigits: 1, rightDigits: 1, maxResult: 20 };
 const multiAdd: ProblemConfig = { operation: 'addition', leftDigits: 2, rightDigits: 2, carryMode: 'allowed' };
+const multiSub: ProblemConfig = { operation: 'subtraction', leftDigits: 2, rightDigits: 2, borrowMode: 'allowed' };
 
 /** Generate a deterministic problem for the config and seed. */
 function generate(config: ProblemConfig, seed: number): GeneratedProblem {
@@ -96,13 +97,31 @@ describe('ProblemWorkDisplay (MGP6-02)', () => {
     const state = drive(multiAdd, seed, 1); // accept one step, leave the rest unsolved
     expect(state.snapshot.stepIndex).not.toBeNull();
     expect(state.snapshot.stepIndex).toBe(1);
-    render(<ProblemWorkDisplay lifecycle={state} />);
+    const { container } = render(<ProblemWorkDisplay lifecycle={state} />);
     // The active step and expected value come from the domain snapshot.
     expect(state.snapshot.stepIndex).toBe(1);
     expect(state.snapshot.expected).not.toBeNull();
     expect(state.snapshot.problemMatrix.flat().some((cell) => cell.kind === 'empty' && cell.active)).toBe(true);
     // The step-progress line is supplied by lifecycle metadata.
     expect(screen.getByText(/Step \d+ of \d+/)).not.toBeNull();
+    const rows = Array.from(container.querySelector('.font-mono')?.children ?? []);
+    const answerRowIndex = state.snapshot.rowTypes.findIndex(
+      (rowType, rowIndex) => rowIndex >= state.snapshot.operandCount && rowType === 'number',
+    );
+    expect(rows[answerRowIndex].querySelector('.text-green-300')).not.toBeNull();
+  });
+
+  it('highlights accepted subtraction work green while the problem is still active', () => {
+    const seed = findPartialSeed(multiSub);
+    const state = drive(multiSub, seed, 1);
+    const { container } = render(<ProblemWorkDisplay lifecycle={state} />);
+    const rows = Array.from(container.querySelector('.font-mono')?.children ?? []);
+    const answerRowIndex = state.snapshot.rowTypes.findIndex(
+      (rowType, rowIndex) => rowIndex >= state.snapshot.operandCount && rowType === 'number',
+    );
+
+    expect(state.snapshot.stepIndex).toBe(1);
+    expect(rows[answerRowIndex].querySelector('.text-green-300')).not.toBeNull();
   });
 
   it('does not show a carry marker before the producing step is answered', () => {

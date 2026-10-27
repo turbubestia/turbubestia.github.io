@@ -1,0 +1,19 @@
+[
+  { "name": "Zombie", "filename": "Zombie_JE5_BE2.png", "tier": 1 },
+  { "name": "Zombie Villager", "filename": "Plains_Zombie_Villager_Base_BE1.png", "tier": 2 },
+  { "name": "Skeleton", "filename": "Skeleton_JE6_BE4.png", "tier": 3 },
+  { "name": "Cave Spider", "filename": "Cave_Spider_JE3_BE3.png", "tier": 4 },
+  { "name": "Creeper", "filename": "Creeper_JE3_BE1.png", "tier": 5 },
+  { "name": "Piglin", "filename": "Piglin_BE.png", "tier": 6 },
+  { "name": "Pillager", "filename": "Pillager_BE1.png", "tier": 7 },
+  { "name": "Witch", "filename": "Witch_BE3.png", "tier": 8 },
+  { "name": "Hoglin", "filename": "Hoglin_BE2.png", "tier": 9 },
+  { "name": "Wither Skeleton", "filename": "Wither_Skeleton_JE4_BE3.png", "tier": 10 },
+  { "name": "Guardian", "filename": "Guardian_JE2_BE2.png", "tier": 11 },
+  { "name": "Enderman", "filename": "Enderman_BE1.png", "tier": 12 },
+  { "name": "Ghast", "filename": "Ghast_JE3_BE3.png", "tier": 13 },
+  { "name": "Evoker", "filename": "Evoker_JE2_BE2.png", "tier": 14 },
+  { "name": "Ravager", "filename": "Ravager_BE1.png", "tier": 15 },
+  { "name": "Piglin Brute", "filename": "Piglin_Brute_BE1.png", "tier": 16 },
+  { "name": "Vindicator", "filename": "Vindicator_JE3_BE3.png", "tier": 17 }
+]

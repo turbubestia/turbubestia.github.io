@@ -26,6 +26,7 @@ describe('GameView (MGP6-03)', () => {
     render(<GameView gameState={makeGameState()} onEquip={() => undefined} />);
     expect(screen.getByRole('img', { name: 'Hero health: 12 of 12' })).not.toBeNull();
     expect(screen.getByRole('img', { name: 'Enemy health: 3 of 3' })).not.toBeNull();
+    expect(screen.getByRole('img', { name: 'Hero' }).getAttribute('src')).toContain('289px-Steve_in_leather_armor.png');
   });
 
   it('renders boss state with the active heart and queued problem count', () => {
@@ -46,14 +47,13 @@ describe('GameView (MGP6-03)', () => {
     expect(screen.getByText('Heart 2 of 3 · 2 queued')).not.toBeNull();
   });
 
-  it('renders the three equipment slots with a dash when empty', () => {
+  it('renders the two equipment slots with a dash when empty', () => {
     render(<GameView gameState={makeGameState()} onEquip={() => undefined} />);
     expect(screen.getByText('Weapon')).not.toBeNull();
-    expect(screen.getByText('Armor')).not.toBeNull();
     expect(screen.getByText('Bow')).not.toBeNull();
-    // All three slots show the empty placeholder.
+    // Both slots show the empty placeholder.
     const dashes = screen.getAllByText('—');
-    expect(dashes).toHaveLength(3);
+    expect(dashes).toHaveLength(2);
   });
 
   it('renders decorative stats derived from the loadout and solved count', () => {
@@ -71,24 +71,20 @@ describe('GameView (MGP6-03)', () => {
     expect(screen.queryByRole('group', { name: 'Choose a reward' })).toBeNull();
   });
 
-  it('offers one selectable reward per category and calls onEquip with that category', () => {
+  it('offers one selectable reward per active category and calls onEquip with that category', () => {
     const onEquip = vi.fn();
     const state = makeGameState({ solvedCount: 5, pendingReward: generateRewardOffer(5) });
     render(<GameView gameState={state} onEquip={onEquip} />);
     expect(screen.getByRole('group', { name: 'Choose a reward' })).not.toBeNull();
 
     const weapon = state.pendingReward?.['hand-weapon'];
-    const armor = state.pendingReward?.armor;
     const bow = state.pendingReward?.bow;
     expect(weapon).not.toBeNull();
-    expect(armor).not.toBeNull();
     expect(bow).not.toBeNull();
 
-    fireEvent.click(screen.getByRole('button', { name: `${weapon?.name} (Weapon)` }));
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(`${weapon?.name}.*Weapon`) }));
     expect(onEquip).toHaveBeenCalledWith('hand-weapon' satisfies EquipmentCategory);
-    fireEvent.click(screen.getByRole('button', { name: `${armor?.name} (Armor)` }));
-    expect(onEquip).toHaveBeenCalledWith('armor');
-    fireEvent.click(screen.getByRole('button', { name: `${bow?.name} (Bow)` }));
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(`${bow?.name}.*Bow`) }));
     expect(onEquip).toHaveBeenCalledWith('bow');
   });
 

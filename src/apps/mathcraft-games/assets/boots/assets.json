@@ -1,0 +1,9 @@
+[
+  { "name": "Chainmail Boots", "filename": "Chainmail_Boots_JE2_BE2.png", "type": "armor", "tier": 3, "value": 1 },
+  { "name": "Copper Boots", "filename": "Copper_Boots_JE1_BE1.png", "type": "armor", "tier": 4, "value": 2 },
+  { "name": "Diamond Boots", "filename": "Diamond_Boots_JE2_BE2.png", "type": "armor", "tier": 6, "value": 3 },
+  { "name": "Golden Boots", "filename": "Golden_Boots_JE2_BE2.png", "type": "armor", "tier": 2, "value": 1 },
+  { "name": "Iron Boots", "filename": "Iron_Boots_JE2_BE2.png", "type": "armor", "tier": 5, "value": 2 },
+  { "name": "Leather Boots", "filename": "Leather_Boots_JE3_BE2.png", "type": "armor", "tier": 1, "value": 1 },
+  { "name": "Netherite Boots", "filename": "Netherite_Boots_JE2_BE1.png", "type": "armor", "tier": 7, "value": 3 }
+]

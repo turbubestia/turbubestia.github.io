@@ -1,0 +1,9 @@
+[
+  { "name": "Chainmail Leggings", "filename": "Chainmail_Leggings_JE2_BE2.png", "type": "armor", "tier": 3, "value": 4 },
+  { "name": "Copper Leggings", "filename": "Copper_Leggings_JE1_BE1.png", "type": "armor", "tier": 4, "value": 4 },
+  { "name": "Diamond Leggings", "filename": "Diamond_Leggings_JE2_BE2.png", "type": "armor", "tier": 6, "value": 6 },
+  { "name": "Golden Leggings", "filename": "Golden_Leggings_JE2_BE2.png", "type": "armor", "tier": 2, "value": 3 },
+  { "name": "Iron Leggings", "filename": "Iron_Leggings_JE2_BE2.png", "type": "armor", "tier": 5, "value": 5 },
+  { "name": "Leather Pants", "filename": "Leather_Pants_JE4_BE2.png", "type": "armor", "tier": 1, "value": 2 },
+  { "name": "Netherite Leggings", "filename": "Netherite_Leggings_JE3_BE2.png", "type": "armor", "tier": 7, "value": 6 }
+]

@@ -43,8 +43,7 @@ export function ProblemWorkDisplay({ lifecycle }: ProblemWorkDisplayProps) {
               cells={row}
               rowType={snapshot.rowTypes[rowIndex]}
               isFinalAnswer={solved && rowIndex === snapshot.problemMatrix.length - 1}
-              highlightValues={snapshot.problemOperation === 'multiplication'
-                && rowIndex >= snapshot.operandCount
+              highlightValues={rowIndex >= snapshot.operandCount
                 && snapshot.rowTypes[rowIndex] === 'number'}
             />
             {linesAfterRow.get(rowIndex)?.map((line, lineIndex) => (
