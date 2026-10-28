@@ -6,16 +6,16 @@
 
 import armorManifest from '../assets/armor-sets/assets.json';
 import weaponsManifest from '../assets/weapons/assets.json';
-export type EquipmentCategory = 'melee' | 'bow' | 'armor';
+export type EquipmentCategory = 'melee' | 'range' | 'armor';
 
 export const REWARD_TIER_SOLVE_INTERVAL = 3;
 
 // This list all the equipment categories that are eligible for display in the reward offer panel.
-export const EQUIPMENT_CATEGORIES: readonly EquipmentCategory[] = ['melee', 'bow', 'armor'];
+export const EQUIPMENT_CATEGORIES: readonly EquipmentCategory[] = ['melee', 'range', 'armor'];
 
 // This list only the equipment to display in the invetory panel. Armor is left out because
 // is already displayed on the hero and does not need to be shown in the inventory panel.
-export const EQUIPMENT_DISPLAY_CATEGORIES: readonly EquipmentCategory[] = ['melee', 'bow'];
+export const EQUIPMENT_DISPLAY_CATEGORIES: readonly EquipmentCategory[] = ['melee', 'range'];
 
 interface ManifestAssetEntry {
   name: string;
@@ -47,7 +47,7 @@ function normalizeCategory(type: string): EquipmentCategory | null {
     case 'melee':
       return 'melee';
     case 'range':
-      return 'bow';
+      return 'range';
     case 'armor':
       return 'armor';
     default:
@@ -88,9 +88,9 @@ const legacyCompatibilityCatalog: readonly EquipmentItem[] = [
   { id: 'wooden-sword', category: 'melee', name: 'Wooden Sword', filename: 'Wooden_Axe_JE2_BE2.png', tier: 1, power: 3, source: 'legacy' },
   { id: 'iron-sword', category: 'melee', name: 'Iron Sword', filename: 'Iron_Sword_JE2_BE2.png', tier: 2, power: 7, source: 'legacy' },
   { id: 'diamond-sword', category: 'melee', name: 'Diamond Sword', filename: 'Diamond_Sword_JE3_BE3.png', tier: 3, power: 12, source: 'legacy' },
-  { id: 'wooden-bow', category: 'bow', name: 'Wooden Bow', filename: 'Bow_JE2_BE1.png', tier: 1, power: 3, source: 'legacy' },
-  { id: 'crossbow', category: 'bow', name: 'Crossbow', filename: 'Crossbow.png', tier: 2, power: 7, source: 'legacy' },
-  { id: 'enchanted-bow', category: 'bow', name: 'Enchanted Bow', filename: 'Trident_(item)_JE2_BE1.png', tier: 3, power: 12, source: 'legacy' },
+  { id: 'wooden-bow', category: 'range', name: 'Wooden Bow', filename: 'Bow_JE2_BE1.png', tier: 1, power: 3, source: 'legacy' },
+  { id: 'crossbow', category: 'range', name: 'Crossbow', filename: 'Crossbow.png', tier: 2, power: 7, source: 'legacy' },
+  { id: 'enchanted-bow', category: 'range', name: 'Enchanted Bow', filename: 'Trident_(item)_JE2_BE1.png', tier: 3, power: 12, source: 'legacy' },
 ];
 
 export const EQUIPMENT_CATALOG: readonly EquipmentItem[] = [...manifestCatalog, ...legacyCompatibilityCatalog];
@@ -127,7 +127,7 @@ export type RewardOffer = Record<EquipmentCategory, EquipmentItem | null>;
 export function generateRewardOffer(solvedCount: number, randomFn: () => number = Math.random): RewardOffer {
   return {
     melee: selectRewardItem('melee', solvedCount, randomFn),
-    bow: selectRewardItem('bow', solvedCount, randomFn),
+    range: selectRewardItem('range', solvedCount, randomFn),
     armor: selectRewardItem('armor', solvedCount, randomFn),
   };
 }
@@ -135,10 +135,10 @@ export function generateRewardOffer(solvedCount: number, randomFn: () => number 
 /** The currently equipped item per category. */
 export type EquipmentLoadout = Record<EquipmentCategory, EquipmentItem | null>;
 
-export const EMPTY_LOADOUT: EquipmentLoadout = { melee: null, bow: null, armor: null };
+export const EMPTY_LOADOUT: EquipmentLoadout = { melee: null, range: null, armor: null };
 
 export interface DisplayStats {
-  /** Average of the equipped hand-weapon and bow power. */
+  /** Average of the equipped melee and range power. */
   damage: number;
   /** Defense from the equipped armor set. */
   defense: number;
@@ -152,9 +152,9 @@ export interface DisplayStats {
  */
 export function computeDisplayStats(loadout: EquipmentLoadout, mathLevel: number): DisplayStats {
   const weaponPower = loadout.melee?.power ?? 0;
-  const bowPower = loadout.bow?.power ?? 0;
+  const rangePower = loadout.range?.power ?? 0;
   const armorPower = loadout.armor?.power ?? 0;
-  const damage = (weaponPower + bowPower) / 2;
+  const damage = (weaponPower + rangePower) / 2;
   const defense = armorPower;
   const level = (damage + defense) * mathLevel;
   return { damage, defense, level };

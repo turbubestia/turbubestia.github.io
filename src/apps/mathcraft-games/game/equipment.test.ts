@@ -9,8 +9,8 @@ import {
 } from './equipment';
 
 describe('equipment: categories', () => {
-  it('includes hand-weapon, bow, and armor', () => {
-    expect(EQUIPMENT_CATEGORIES).toEqual(['hand-weapon', 'bow', 'armor']);
+  it('includes melee, range, and armor', () => {
+    expect(EQUIPMENT_CATEGORIES).toEqual(['melee', 'range', 'armor']);
   });
 
   it('loads armor entries from the manifest with correct type and value mapping', () => {
@@ -29,7 +29,7 @@ describe('equipment: categories', () => {
 describe('equipment: reward selection', () => {
   it('uses the first item tier for early timed rewards', () => {
     expect(selectRewardItem('melee', 2)?.tier).toBe(1);
-    expect(selectRewardItem('bow', 0)?.tier).toBe(1);
+    expect(selectRewardItem('range', 0)?.tier).toBe(1);
     expect(selectRewardItem('armor', 0)?.tier).toBe(1);
   });
 
@@ -38,9 +38,9 @@ describe('equipment: reward selection', () => {
     expect(tierOneWeapon?.tier).toBe(1);
     expect(tierOneWeapon?.category).toBe('melee');
 
-    const tierTwoBow = selectRewardItem('bow', 6, () => 0.99);
-    expect(tierTwoBow?.tier).toBe(2);
-    expect(tierTwoBow?.category).toBe('bow');
+    const tierTwoRange = selectRewardItem('range', 6, () => 0.99);
+    expect(tierTwoRange?.tier).toBe(2);
+    expect(tierTwoRange?.category).toBe('range');
 
     const tierOneArmor = selectRewardItem('armor', 3, () => 0);
     expect(tierOneArmor?.tier).toBe(1);
@@ -50,7 +50,7 @@ describe('equipment: reward selection', () => {
   it('offers one candidate per category from the current tier bucket', () => {
     const offer = generateRewardOffer(3, () => 0);
     expect(offer['melee']?.tier).toBe(1);
-    expect(offer['bow']?.tier).toBe(1);
+    expect(offer['range']?.tier).toBe(1);
     expect(offer['armor']?.tier).toBe(1);
   });
 });
@@ -60,10 +60,10 @@ describe('equipment: display stats', () => {
     expect(computeDisplayStats(EMPTY_LOADOUT, 10)).toEqual({ damage: 0, defense: 0, level: 0 });
   });
 
-  it('averages hand-weapon and bow power for damage and includes armor defense', () => {
+  it('averages melee and range power for damage and includes armor defense', () => {
     const loadout = {
       'melee': EQUIPMENT_CATALOG.find((item) => item.id === 'iron-sword')!,
-      'bow': EQUIPMENT_CATALOG.find((item) => item.id === 'crossbow')!,
+      'range': EQUIPMENT_CATALOG.find((item) => item.id === 'crossbow')!,
       'armor': null,
     };
     expect(computeDisplayStats(loadout, 10)).toEqual({ damage: 7, defense: 0, level: 70 });
@@ -72,7 +72,7 @@ describe('equipment: display stats', () => {
   it('includes armor defense in the level calculation', () => {
     const loadout = {
       'melee': EQUIPMENT_CATALOG.find((item) => item.id === 'wooden-sword')!,
-      'bow': null,
+      'range': null,
       armor: EQUIPMENT_CATALOG.find((item) => item.name.includes('Leather'))!,
     };
     // damage = 1.5 (weapon only), defense = 7 (leather)
@@ -83,7 +83,7 @@ describe('equipment: display stats', () => {
   it('computes level from (damage + defense) * mathLevel', () => {
     const loadout = {
       'melee': EQUIPMENT_CATALOG.find((item) => item.id === 'iron-sword')!,
-      'bow': EQUIPMENT_CATALOG.find((item) => item.id === 'crossbow')!,
+      'range': EQUIPMENT_CATALOG.find((item) => item.id === 'crossbow')!,
       'armor': EQUIPMENT_CATALOG.find((item) => item.category === 'armor' && item.name.includes('Iron Armor'))!,
     };
     // damage = (7 + 7) / 2 = 7, defense = 15 (iron armor)

@@ -49,14 +49,15 @@ describe('GameView (MGP6-03)', () => {
     expect(screen.getByText('2 queued')).not.toBeNull();
   });
 
-  it('renders the three equipment slots with a dash when empty', () => {
+  it('renders the melee and range inventory slots with a dash when empty', () => {
     render(<GameView gameState={makeGameState()} onEquip={() => undefined} />);
+    // Armor is displayed on the hero, not as an inventory slot.
     expect(screen.getByText('Weapon')).not.toBeNull();
-    expect(screen.getByText('Bow')).not.toBeNull();
-    expect(screen.getByText('Armor')).not.toBeNull();
-    // All three slots show the empty placeholder.
+    expect(screen.getByText('Range')).not.toBeNull();
+    expect(screen.queryByText('Armor')).toBeNull();
+    // Both inventory slots show the empty placeholder.
     const dashes = screen.getAllByText('—');
-    expect(dashes).toHaveLength(3);
+    expect(dashes).toHaveLength(2);
   });
 
   it('renders decorative stats derived from the loadout and solved count', () => {
@@ -81,14 +82,14 @@ describe('GameView (MGP6-03)', () => {
     expect(screen.getByRole('group', { name: 'Choose a reward' })).not.toBeNull();
 
     const weapon = state.pendingReward?.melee;
-    const bow = state.pendingReward?.bow;
+    const range = state.pendingReward?.range;
     expect(weapon).not.toBeNull();
-    expect(bow).not.toBeNull();
+    expect(range).not.toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: new RegExp(`${weapon?.name}.*Weapon`) }));
     expect(onEquip).toHaveBeenCalledWith('melee' satisfies EquipmentCategory);
-    fireEvent.click(screen.getByRole('button', { name: new RegExp(`${bow?.name}.*Bow`) }));
-    expect(onEquip).toHaveBeenCalledWith('bow');
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(`${range?.name}.*Range`) }));
+    expect(onEquip).toHaveBeenCalledWith('range');
   });
 
   it('does not render a separate Next control', () => {

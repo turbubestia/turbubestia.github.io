@@ -20,13 +20,13 @@ interface GameViewProps {
 
 const CATEGORY_LABELS: Record<EquipmentCategory, string> = {
   'melee': 'Weapon',
-  'bow': 'Range',
+  'range': 'Range',
   'armor': 'Armor',
 };
 
 const ASSET_FOLDERS: Record<EquipmentCategory, 'weapons' | 'armor-sets'> = {
   'melee': 'weapons',
-  'bow': 'weapons',
+  'range': 'weapons',
   'armor': 'armor-sets',
 };
 

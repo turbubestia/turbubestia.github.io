@@ -43,8 +43,8 @@ describe('AnswerEntry (MGP6-02, MGP6-06)', () => {
     for (const digit of ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']) {
       expect(screen.getByRole('button', { name: digit })).not.toBeNull();
     }
-    expect(screen.getByRole('button', { name: 'Delete last digit' })).not.toBeNull();
-    expect(screen.getByRole('button', { name: 'Submit answer' })).not.toBeNull();
+    expect(screen.getByRole('button', { name: '⌫' })).not.toBeNull();
+    expect(screen.getByRole('button', { name: 'Enter' })).not.toBeNull();
   });
 
   it('appends digits and deletes via the imperative handle (physical keyboard)', () => {
@@ -94,7 +94,7 @@ describe('AnswerEntry (MGP6-02, MGP6-06)', () => {
 
     const nextButton = screen.getByRole('button', { name: 'Next' });
     expect((nextButton as HTMLButtonElement).disabled).toBe(false);
-    expect(screen.queryByRole('button', { name: 'Submit answer' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Enter' })).toBeNull();
     expect((screen.getByRole('button', { name: '1' }) as HTMLButtonElement).disabled).toBe(true);
     fireEvent.click(nextButton);
     act(() => {
@@ -133,7 +133,7 @@ describe('AnswerEntry (MGP6-02, MGP6-06)', () => {
       vi.useRealTimers();
     });
 
-    it('shows the entered value in red for exactly 2s, then discards it and re-enables entry', () => {
+    it('shows the entered value in red for exactly 1s, then discards it and re-enables entry', () => {
       const onSubmit = vi.fn(() => ({ status: 'wrong' as const }));
       const ref = createRef<AnswerEntryHandle>();
       const { container } = render(<AnswerEntry ref={ref} {...makeProps({ onSubmit })} />);
@@ -151,14 +151,14 @@ describe('AnswerEntry (MGP6-02, MGP6-06)', () => {
       expect(displayClass(container)).toContain('text-red-400');
       expect((screen.getByRole('button', { name: '1' }) as HTMLButtonElement).disabled).toBe(true);
 
-      // Just before 2s the feedback is still active.
+      // Just before 1s the feedback is still active.
       act(() => {
-        vi.advanceTimersByTime(1999);
+        vi.advanceTimersByTime(999);
       });
       expect(displayText(container)).toBe('7');
       expect(displayClass(container)).toContain('text-red-400');
 
-      // At 2s the value is discarded and entry re-enables on the same step.
+      // At 1s the value is discarded and entry re-enables on the same step.
       act(() => {
         vi.advanceTimersByTime(1);
       });
@@ -201,7 +201,7 @@ describe('AnswerEntry (MGP6-02, MGP6-06)', () => {
       expect(onAcceptingChange).toHaveBeenLastCalledWith(false);
 
       act(() => {
-        vi.advanceTimersByTime(2000);
+        vi.advanceTimersByTime(1000);
       });
       expect(onAcceptingChange).toHaveBeenLastCalledWith(true);
     });

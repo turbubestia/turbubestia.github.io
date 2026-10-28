@@ -245,7 +245,7 @@ describe('game rules: timed reward offers and decorative stats', () => {
     game.offerReward();
 
     expect(game.state.pendingReward?.melee?.tier).toBe(1);
-    expect(game.state.pendingReward?.bow?.tier).toBe(1);
+    expect(game.state.pendingReward?.range?.tier).toBe(1);
   });
 
   it('advances the offered tier with solved-count progression', () => {
@@ -257,7 +257,7 @@ describe('game rules: timed reward offers and decorative stats', () => {
     game.offerReward();
 
     expect(game.state.pendingReward?.melee?.tier).toBe(2);
-    expect(game.state.pendingReward?.bow?.tier).toBe(2);
+    expect(game.state.pendingReward?.range?.tier).toBe(2);
   });
 
   it('selecting an item replaces only that category and consumes the reward', () => {
@@ -267,13 +267,13 @@ describe('game rules: timed reward offers and decorative stats', () => {
     const equipped = game.equipItem('melee');
     expect(equipped).not.toBeNull();
     expect(game.state.loadout.melee?.tier).toBe(1);
-    expect(game.state.loadout.bow).toBeNull();
+    expect(game.state.loadout.range).toBeNull();
     expect(game.state.pendingReward).toBeNull();
   });
 
   it('returns null when equipping a category with no pending offer', () => {
     const game = new GameRules();
-    expect(game.equipItem('bow')).toBeNull();
+    expect(game.equipItem('range')).toBeNull();
   });
 
   it('keeps decorative display stats separate from combat outcomes', () => {
