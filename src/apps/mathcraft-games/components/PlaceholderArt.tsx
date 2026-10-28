@@ -13,14 +13,14 @@ export function PlaceholderArt({ name, src, alt }: PlaceholderArtProps) {
       <img
         src={src}
         alt={alt ?? name}
-        className="h-24 w-24 rounded-lg border border-panel-border bg-bg object-contain p-2"
+        className="h-24 w-24 rounded border-2 border-rpg-border bg-rpg-slot object-contain p-2"
       />
     );
   }
 
   return (
-    <div className="flex min-h-24 w-32 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-panel-border bg-bg p-3 text-center">
-      <span className="text-xs text-neutral-400">{name}</span>
+    <div className="flex min-h-24 w-32 flex-col items-center justify-center gap-1 rounded border-2 border-dashed border-rpg-border bg-rpg-slot p-3 text-center">
+      <span className="font-pixel text-[10px] text-rpg-text-dim">{name}</span>
     </div>
   );
 }

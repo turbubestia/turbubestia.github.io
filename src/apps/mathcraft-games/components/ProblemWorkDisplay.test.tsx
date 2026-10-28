@@ -68,8 +68,8 @@ describe('ProblemWorkDisplay (MGP6-02)', () => {
 
   it('renders the operation label and step progress for an unsolved single-digit problem', () => {
     render(<ProblemWorkDisplay lifecycle={drive(singleAdd, 1)} />);
-    expect(screen.getByText('Addition')).not.toBeNull();
-    expect(screen.getByText('Step 1 of 1')).not.toBeNull();
+    expect(screen.getByText(/ADDITION/)).not.toBeNull();
+    expect(screen.getByText(/STEP 1 \/ 1/)).not.toBeNull();
   });
 
   it('shows the operands and a placeholder answer slot while unsolved', () => {
@@ -88,7 +88,7 @@ describe('ProblemWorkDisplay (MGP6-02)', () => {
     const { container } = render(<ProblemWorkDisplay lifecycle={state} />);
     expect(container.textContent).toContain(String(state.problem.result));
     // The completed answer carries the green highlight class.
-    const green = Array.from(container.querySelectorAll('.text-green-300'));
+    const green = Array.from(container.querySelectorAll('.text-rpg-highlight'));
     expect(green.some((el) => el.textContent === String(state.problem.result))).toBe(true);
   });
 
@@ -103,25 +103,25 @@ describe('ProblemWorkDisplay (MGP6-02)', () => {
     expect(state.snapshot.expected).not.toBeNull();
     expect(state.snapshot.problemMatrix.flat().some((cell) => cell.kind === 'empty' && cell.active)).toBe(true);
     // The step-progress line is supplied by lifecycle metadata.
-    expect(screen.getByText(/Step \d+ of \d+/)).not.toBeNull();
-    const rows = Array.from(container.querySelector('.font-mono')?.children ?? []);
+    expect(screen.getByText(/STEP \d+ \/ \d+/)).not.toBeNull();
+    const rows = Array.from(container.querySelector('.font-rpg')?.children ?? []);
     const answerRowIndex = state.snapshot.rowTypes.findIndex(
       (rowType, rowIndex) => rowIndex >= state.snapshot.operandCount && rowType === 'number',
     );
-    expect(rows[answerRowIndex].querySelector('.text-green-300')).not.toBeNull();
+    expect(rows[answerRowIndex].querySelector('.text-rpg-highlight')).not.toBeNull();
   });
 
   it('highlights accepted subtraction work green while the problem is still active', () => {
     const seed = findPartialSeed(multiSub);
     const state = drive(multiSub, seed, 1);
     const { container } = render(<ProblemWorkDisplay lifecycle={state} />);
-    const rows = Array.from(container.querySelector('.font-mono')?.children ?? []);
+    const rows = Array.from(container.querySelector('.font-rpg')?.children ?? []);
     const answerRowIndex = state.snapshot.rowTypes.findIndex(
       (rowType, rowIndex) => rowIndex >= state.snapshot.operandCount && rowType === 'number',
     );
 
     expect(state.snapshot.stepIndex).toBe(1);
-    expect(rows[answerRowIndex].querySelector('.text-green-300')).not.toBeNull();
+    expect(rows[answerRowIndex].querySelector('.text-rpg-highlight')).not.toBeNull();
   });
 
   it('does not show a carry marker before the producing step is answered', () => {
@@ -139,13 +139,13 @@ describe('ProblemWorkDisplay (MGP6-02)', () => {
     const before = drive(multiAdd, seed); // nothing accepted
     const { container: beforeContainer, unmount } = render(<ProblemWorkDisplay lifecycle={before} />);
     // No orange carry box is rendered while no step is accepted.
-    expect(beforeContainer.querySelector('.text-amber-400')).toBeNull();
+    expect(beforeContainer.querySelector('.text-rpg-carry')).toBeNull();
     unmount();
 
     const after = drive(multiAdd, seed, 1); // accept the LSB step
     const { container: afterContainer } = render(<ProblemWorkDisplay lifecycle={after} />);
     // The carry box now appears above the next column.
-    expect(afterContainer.querySelector('.text-amber-400')).not.toBeNull();
+    expect(afterContainer.querySelector('.text-rpg-carry')).not.toBeNull();
   });
 
   it('renders a columnar layout with the operand digits for an unsolved multi-digit problem', () => {
@@ -175,7 +175,7 @@ describe('ProblemWorkDisplay (MGP6-02)', () => {
       expect(container.textContent).toContain(digit);
     }
     // The step-progress line is hidden once solved.
-    expect(screen.queryByText(/Step \d+ of \d+/)).toBeNull();
+    expect(screen.queryByText(/STEP \d+ \/ \d+/)).toBeNull();
   });
 
   it('shows operands and partial products for an unsolved multi-digit multiplication', () => {
@@ -204,18 +204,18 @@ describe('ProblemWorkDisplay (MGP6-02)', () => {
     }
     const state = drive(mult, seed, 1);
     const { container } = render(<ProblemWorkDisplay lifecycle={state} />);
-    const matrixRows = Array.from(container.querySelector('.font-mono')?.children ?? []);
+    const matrixRows = Array.from(container.querySelector('.font-rpg')?.children ?? []);
     const firstWorkRowIndex = state.snapshot.rowTypes.findIndex(
       (rowType, rowIndex) => rowIndex >= state.snapshot.operandCount && rowType === 'number',
     );
 
     expect(state.snapshot.stepIndex).toBe(1);
-    expect(matrixRows[firstWorkRowIndex].querySelector('.text-green-300')).not.toBeNull();
-    expect(matrixRows.slice(0, state.snapshot.operandCount).some((row) => row.querySelector('.text-green-300'))).toBe(false);
+    expect(matrixRows[firstWorkRowIndex].querySelector('.text-rpg-highlight')).not.toBeNull();
+    expect(matrixRows.slice(0, state.snapshot.operandCount).some((row) => row.querySelector('.text-rpg-highlight'))).toBe(false);
 
     const carryRowIndex = state.snapshot.rowTypes.findIndex((rowType) => rowType === 'carry');
     expect(carryRowIndex).toBeGreaterThanOrEqual(0);
-    expect(matrixRows[carryRowIndex].querySelector('.text-amber-400')).not.toBeNull();
+    expect(matrixRows[carryRowIndex].querySelector('.text-rpg-carry')).not.toBeNull();
   });
 
   it('keeps the full multiplication work visible once solved (no collapse to a single line)', () => {

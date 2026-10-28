@@ -11,7 +11,7 @@ describe('PauseOverlay (MGP6-04)', () => {
   it('renders the manual-pause heading and a resume control', () => {
     render(<PauseOverlay kind="manual" offersEndSession={false} onResume={() => undefined} onEndSession={() => undefined} />);
     expect(screen.getByRole('dialog', { name: 'Paused' })).not.toBeNull();
-    expect(screen.getByRole('button', { name: 'Resume' })).not.toBeNull();
+    expect(screen.getByRole('button', { name: 'RESUME' })).not.toBeNull();
   });
 
   it('renders the idle "Still There" heading and its explanatory text', () => {
@@ -22,31 +22,31 @@ describe('PauseOverlay (MGP6-04)', () => {
 
   it('does not offer end-session for a manual pause', () => {
     render(<PauseOverlay kind="manual" offersEndSession={false} onResume={() => undefined} onEndSession={() => undefined} />);
-    expect(screen.queryByRole('button', { name: 'End session' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'END SESSION' })).toBeNull();
   });
 
   it('does not offer end-session for a non-expired idle pause', () => {
     render(<PauseOverlay kind="idle" offersEndSession={false} onResume={() => undefined} onEndSession={() => undefined} />);
-    expect(screen.queryByRole('button', { name: 'End session' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'END SESSION' })).toBeNull();
   });
 
   it('offers end-session in addition to resume when the idle pause is post-expiration', () => {
     render(<PauseOverlay kind="idle" offersEndSession={true} onResume={() => undefined} onEndSession={() => undefined} />);
-    expect(screen.getByRole('button', { name: 'Resume' })).not.toBeNull();
-    expect(screen.getByRole('button', { name: 'End session' })).not.toBeNull();
+    expect(screen.getByRole('button', { name: 'RESUME' })).not.toBeNull();
+    expect(screen.getByRole('button', { name: 'END SESSION' })).not.toBeNull();
   });
 
   it('calls onResume when the resume control is clicked', () => {
     const onResume = vi.fn();
     render(<PauseOverlay kind="manual" offersEndSession={false} onResume={onResume} onEndSession={() => undefined} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Resume' }));
+    fireEvent.click(screen.getByRole('button', { name: 'RESUME' }));
     expect(onResume).toHaveBeenCalledTimes(1);
   });
 
   it('calls onEndSession when the end-session control is clicked', () => {
     const onEndSession = vi.fn();
     render(<PauseOverlay kind="idle" offersEndSession={true} onResume={() => undefined} onEndSession={onEndSession} />);
-    fireEvent.click(screen.getByRole('button', { name: 'End session' }));
+    fireEvent.click(screen.getByRole('button', { name: 'END SESSION' }));
     expect(onEndSession).toHaveBeenCalledTimes(1);
   });
 });

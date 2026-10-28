@@ -11,8 +11,8 @@ describe('EndSessionConfirm', () => {
   it('renders an accessible confirmation dialog with cancel and confirm actions', () => {
     render(<EndSessionConfirm onCancel={() => undefined} onConfirm={() => undefined} />);
     expect(screen.getByRole('dialog', { name: 'End this session?' })).not.toBeNull();
-    expect(screen.getByRole('button', { name: 'Cancel' })).not.toBeNull();
-    expect(screen.getByRole('button', { name: 'Confirm end session' })).not.toBeNull();
+    expect(screen.getByRole('button', { name: 'CANCEL' })).not.toBeNull();
+    expect(screen.getByRole('button', { name: 'CONFIRM END SESSION' })).not.toBeNull();
   });
 
   it('forwards cancel and confirm actions', () => {
@@ -20,8 +20,8 @@ describe('EndSessionConfirm', () => {
     const onConfirm = vi.fn();
     render(<EndSessionConfirm onCancel={onCancel} onConfirm={onConfirm} />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Confirm end session' }));
+    fireEvent.click(screen.getByRole('button', { name: 'CANCEL' }));
+    fireEvent.click(screen.getByRole('button', { name: 'CONFIRM END SESSION' }));
 
     expect(onCancel).toHaveBeenCalledTimes(1);
     expect(onConfirm).toHaveBeenCalledTimes(1);

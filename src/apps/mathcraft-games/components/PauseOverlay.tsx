@@ -13,25 +13,25 @@ interface PauseOverlayProps {
 
 export function PauseOverlay({ kind, offersEndSession, onResume, onEndSession }: PauseOverlayProps) {
   return (
-    <div role="dialog" aria-modal="true" aria-label={kind === 'idle' ? 'Still there?' : 'Paused'} className="fixed inset-0 z-40 flex items-center justify-center bg-bg/80">
-      <div className="flex flex-col items-center gap-4 rounded-xl border border-panel-border bg-panel p-8">
-        <h2 className="text-xl font-semibold text-neutral-100">{kind === 'idle' ? 'Still There?' : 'Paused'}</h2>
-        {kind === 'idle' && <p className="text-sm text-neutral-400">No keyboard input for a minute.</p>}
+    <div role="dialog" aria-modal="true" aria-label={kind === 'idle' ? 'Still there?' : 'Paused'} className="fixed inset-0 z-40 flex items-center justify-center bg-black/80 p-4">
+      <div className="rpg-box flex w-full max-w-sm flex-col items-center gap-4 p-8">
+        <h2 className="font-pixel text-base text-rpg-text">{kind === 'idle' ? 'STILL THERE?' : 'PAUSED'}</h2>
+        {kind === 'idle' && <p className="text-lg text-rpg-text-dim">No keyboard input for a minute.</p>}
         <div className="flex gap-3">
           <button
             type="button"
             onClick={onResume}
-            className="rounded-lg border border-panel-border bg-bg px-6 py-2 font-medium text-neutral-100 hover:bg-bg/70"
+            className="rpg-key-enter px-6 py-2 font-pixel text-xs tracking-wider"
           >
-            Resume
+            RESUME
           </button>
           {offersEndSession && (
             <button
               type="button"
               onClick={onEndSession}
-              className="rounded-lg border border-panel-border bg-bg px-6 py-2 text-neutral-300 hover:bg-bg/70"
+              className="rpg-key px-6 py-2 font-pixel text-xs tracking-wider hover:bg-rpg-border hover:border-rpg-border-light"
             >
-              End session
+              END SESSION
             </button>
           )}
         </div>

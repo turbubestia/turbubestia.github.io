@@ -44,7 +44,7 @@ describe('AnswerEntry (MGP6-02, MGP6-06)', () => {
       expect(screen.getByRole('button', { name: digit })).not.toBeNull();
     }
     expect(screen.getByRole('button', { name: '⌫' })).not.toBeNull();
-    expect(screen.getByRole('button', { name: 'Enter' })).not.toBeNull();
+    expect(screen.getByRole('button', { name: 'ENTER' })).not.toBeNull();
   });
 
   it('appends digits and deletes via the imperative handle (physical keyboard)', () => {
@@ -92,9 +92,9 @@ describe('AnswerEntry (MGP6-02, MGP6-06)', () => {
     const ref = createRef<AnswerEntryHandle>();
     render(<AnswerEntry ref={ref} {...makeProps({ onSubmit, onNext, nextEnabled: true })} />);
 
-    const nextButton = screen.getByRole('button', { name: 'Next' });
+    const nextButton = screen.getByRole('button', { name: 'NEXT' });
     expect((nextButton as HTMLButtonElement).disabled).toBe(false);
-    expect(screen.queryByRole('button', { name: 'Enter' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'ENTER' })).toBeNull();
     expect((screen.getByRole('button', { name: '1' }) as HTMLButtonElement).disabled).toBe(true);
     fireEvent.click(nextButton);
     act(() => {

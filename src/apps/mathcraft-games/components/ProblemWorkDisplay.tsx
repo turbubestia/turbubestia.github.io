@@ -26,17 +26,17 @@ export function ProblemWorkDisplay({ lifecycle }: ProblemWorkDisplayProps) {
   }
 
   return (
-    <div className="flex w-full min-w-0 flex-col items-center gap-2 overflow-x-auto rounded-xl border border-panel-border bg-panel p-4">
-      <div className="flex items-center gap-3 text-sm text-neutral-400">
-        <span>{OPERATION_LABELS[snapshot.problemOperation]}</span>
+    <div className="flex min-w-0 flex-col items-center gap-3 overflow-x-auto rounded border border-rpg-border bg-rpg-slot p-4">
+      <div className="flex w-full items-center justify-between border-b border-rpg-border pb-2">
+        <span className="font-pixel text-xs text-rpg-text">{OPERATION_LABELS[snapshot.problemOperation].toUpperCase()}</span>
         {!solved && (
-          <span>
-            Step {snapshot.stepIndex! + 1} of {totalSteps}
+          <span className="font-pixel text-xs text-rpg-highlight">
+            STEP {snapshot.stepIndex! + 1} / {totalSteps}
           </span>
         )}
       </div>
 
-      <div className="inline-flex flex-col gap-0.5 font-mono text-xl">
+      <div className="inline-flex flex-col gap-0.5 font-rpg text-2xl">
         {snapshot.problemMatrix.map((row, rowIndex) => (
           <div key={`row-${rowIndex}`}>
             <SnapshotRow
@@ -92,18 +92,18 @@ function SnapshotCell({
   const isSkip = cell.kind === 'skip';
   const isActive = cell.kind === 'empty' && cell.active;
   const digitText = cell.kind === 'value' ? String(cell.value) : isActive ? '·' : '';
-  const valueSize = cell.kind === 'value' && String(cell.value).length > 1 ? 'text-sm' : 'text-xl';
+  const valueSize = cell.kind === 'value' && String(cell.value).length > 1 ? 'text-base' : 'text-2xl';
   const cellStateClass = isSkip
     ? 'border-transparent bg-transparent text-transparent'
     : isActive
-      ? 'border-neutral-400 bg-bg text-neutral-100'
+      ? 'border-rpg-border-light bg-rpg-panel-deep text-rpg-text'
       : cell.kind === 'value'
         ? isFinalAnswer || highlightValues
-          ? 'border-green-500/60 bg-green-500/10 text-green-300'
+          ? 'border-rpg-highlight/60 bg-rpg-highlight/10 text-rpg-highlight'
           : isCarry
-            ? 'border-amber-400/40 bg-amber-400/10 text-amber-400'
-            : 'border-panel-border bg-panel text-neutral-200'
-        : 'border-panel-border/40 bg-panel/40 text-neutral-600';
+            ? 'border-rpg-carry/40 bg-rpg-carry/10 text-rpg-carry'
+            : 'border-rpg-border bg-rpg-panel text-rpg-text'
+        : 'border-rpg-border/40 bg-rpg-panel/40 text-rpg-border-light';
 
   return (
     <div className={`flex ${isCarry ? 'h-6' : 'h-8'} w-8 items-center justify-center`}>
@@ -121,8 +121,8 @@ function OperatorLineView({ operation }: { operation: OperationType }) {
   const symbol = operation === 'addition' ? '+' : operation === 'subtraction' ? '−' : '×';
   return (
     <div className="flex items-center gap-1" aria-hidden>
-      <span className="w-6 text-center text-xl">{symbol}</span>
-      <span className="flex-1 border-t border-neutral-500" />
+      <span className="w-6 text-center font-pixel text-sm text-rpg-text-dim">{symbol}</span>
+      <span className="flex-1 border-t-2 border-rpg-border-light" />
     </div>
   );
 }

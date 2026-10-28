@@ -7,7 +7,10 @@ import { EndSessionConfirm } from './components/EndSessionConfirm';
 import { GameView } from './components/GameView';
 import { PauseOverlay } from './components/PauseOverlay';
 import { ProblemWorkDisplay } from './components/ProblemWorkDisplay';
+import { RewardOverlay } from './components/RewardOverlay';
 import { SummaryView } from './components/SummaryView';
+
+import { computeDisplayStats } from './game/equipment';
 
 import type { SessionOptions, SessionSetup } from './session/session';
 
@@ -117,11 +120,13 @@ function ActiveExperience({ setup, sessionOptions, onResult, }: {
   }
 
   const inPlay = state.kind === 'active' || state.kind === 'boss-fight';
+  const { gameState } = snapshot;
+  const stats = computeDisplayStats(gameState.loadout, gameState.solvedCount);
+  const rewardPending = gameState.pendingReward !== null;
 
   const gameView = (
     <GameView
-      gameState={snapshot.gameState}
-      onEquip={equip}
+      gameState={gameState}
     />
   );
   const problemWork = snapshot.activeLifecycleState !== null
@@ -129,47 +134,66 @@ function ActiveExperience({ setup, sessionOptions, onResult, }: {
     : null;
 
   return (
-    <div className="mx-auto flex min-h-[calc(100svh-2.75rem)] w-full max-w-7xl flex-col gap-4 p-4">
-      {inPlay && (
-        <div className="flex items-center justify-end gap-2">
-          <button
-            type="button"
-            onClick={pause}
-            className="rounded-lg border border-panel-border bg-panel px-4 py-1.5 text-sm text-neutral-300 hover:bg-panel/70"
-          >
-            Pause
-          </button>
-          <button
-            type="button"
-            onClick={() => setIsEndSessionConfirmOpen(true)}
-            className="rounded-lg border border-panel-border bg-panel px-4 py-1.5 text-sm text-red-400 hover:bg-panel/70"
-          >
-            End Session
-          </button>
-        </div>
-      )}
+    <div className="rpg-bg min-h-[calc(100svh-2.75rem)] font-rpg text-rpg-text">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 p-4">
+        {inPlay && (
+          <header className="rpg-box flex flex-wrap items-center justify-between gap-3 px-6 py-3">
+            <div>
+              <h1 className="font-pixel text-sm tracking-wider text-rpg-text">MATHCRAFT GAMES</h1>
+              <p className="text-base text-rpg-text-dim">Math combats in a blocky world</p>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <span className="block font-pixel text-[10px] text-rpg-text-dim">MATH LEVEL</span>
+                <span className="text-2xl font-bold text-rpg-text">LVL {stats.level}</span>
+              </div>
+              <button
+                type="button"
+                onClick={pause}
+                className="border border-rpg-border bg-rpg-key px-3 py-1.5 font-pixel text-xs text-rpg-text transition hover:bg-rpg-border"
+              >
+                PAUSE
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsEndSessionConfirmOpen(true)}
+                className="border border-rpg-border bg-rpg-key px-3 py-1.5 font-pixel text-xs text-red-400 transition hover:bg-rpg-border"
+              >
+                END SESSION
+              </button>
+            </div>
+          </header>
+        )}
 
-      {inPlay ? (
-        <div className="my-auto grid min-w-0 grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1.8fr)_minmax(13rem,0.95fr)_minmax(11rem,0.75fr)]">
-          {gameView}
-          {problemWork}
-          <AnswerEntry
-            ref={entryRef}
-            disabled={snapshot.activeLifecycleState === null || isEndSessionConfirmOpen}
-            nextEnabled={snapshot.combatPresentationComplete}
-            onSubmit={submitAnswer}
-            onNext={advance}
-            onAcceptingChange={setAccepting}
-          />
-        </div>
-      ) : (
-        <>
-          {problemWork}
-          {gameView}
-        </>
-      )}
+        {inPlay ? (
+          <div className="my-auto grid min-w-0 grid-cols-1 items-start gap-4 lg:grid-cols-2">
+            {gameView}
+            <div className="rpg-box flex min-w-0 flex-col gap-4 p-4">
+              <div className="grid min-w-0 grid-cols-1 items-stretch gap-4 md:grid-cols-2">
+                {problemWork}
+                <AnswerEntry
+                  ref={entryRef}
+                  disabled={snapshot.activeLifecycleState === null || isEndSessionConfirmOpen || rewardPending}
+                  nextEnabled={snapshot.combatPresentationComplete}
+                  onSubmit={submitAnswer}
+                  onNext={advance}
+                  onAcceptingChange={setAccepting}
+                />
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            {problemWork}
+            {gameView}
+          </>
+        )}
 
-      {state.kind === 'manual-paused' && (
+        {inPlay && gameState.pendingReward !== null && (
+          <RewardOverlay reward={gameState.pendingReward} onEquip={equip} />
+        )}
+
+        {state.kind === 'manual-paused' && (
         <PauseOverlay kind="manual" offersEndSession={false} onResume={resume} onEndSession={endSession} />
       )}
       {state.kind === 'idle-paused' && (
@@ -190,6 +214,7 @@ function ActiveExperience({ setup, sessionOptions, onResult, }: {
           }}
         />
       )}
+      </div>
     </div>
   );
 }

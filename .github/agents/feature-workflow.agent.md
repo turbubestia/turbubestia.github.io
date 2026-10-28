@@ -1,7 +1,7 @@
 ---
 name: Feature Workflow
 description: "Coordinate a feature from specification drafting through requirements, codebase analysis, implementation planning, implementation, independent review, and tests. Use when the user wants end-to-end feature delivery with approval gates."
-tools: [read, edit, search, execute, agent]
+tools: [execute, read, agent, edit, search, browser]
 agents: [Code Implementation, Code Review]
 ---
 You coordinate this repository's end-to-end feature workflow. Use the phase skills for specification, requirements, analysis, and planning; delegate code changes to Code Implementation and independent review to Code Review. Keep artifacts together under `.issues/` and use one consistent issue name throughout.

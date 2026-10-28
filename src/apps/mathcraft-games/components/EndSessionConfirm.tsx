@@ -9,27 +9,27 @@ export function EndSessionConfirm({ onCancel, onConfirm }: EndSessionConfirmProp
       role="dialog"
       aria-modal="true"
       aria-labelledby="end-session-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-bg/80 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
     >
-      <div className="flex w-full max-w-sm flex-col gap-4 rounded-xl border border-panel-border bg-panel p-6">
-        <h2 id="end-session-title" className="text-lg font-semibold text-neutral-100">
+      <div className="rpg-box flex w-full max-w-sm flex-col gap-4 p-6">
+        <h2 id="end-session-title" className="font-pixel text-sm text-rpg-text">
           End this session?
         </h2>
-        <p className="text-sm text-neutral-400">Your progress will be included in the session summary.</p>
+        <p className="text-lg text-rpg-text-dim">Your progress will be included in the session summary.</p>
         <div className="flex justify-end gap-2">
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-lg border border-panel-border bg-bg px-4 py-2 text-sm text-neutral-200 hover:bg-bg/70"
+            className="rpg-key px-4 py-2 font-pixel text-xs tracking-wider hover:bg-rpg-border hover:border-rpg-border-light"
           >
-            Cancel
+            CANCEL
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className="rounded-lg border border-red-500/50 bg-bg px-4 py-2 text-sm text-red-400 hover:bg-bg/70"
+            className="border border-red-500/50 bg-red-950 px-4 py-2 font-pixel text-xs tracking-wider text-red-400 transition hover:bg-red-900"
           >
-            Confirm end session
+            CONFIRM END SESSION
           </button>
         </div>
       </div>

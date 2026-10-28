@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import type { EquipmentCategory } from '../game/equipment';
+import { afterEach, describe, expect, it } from 'vitest';
+import { cleanup, render, screen } from '@testing-library/react';
 import { EMPTY_LOADOUT, generateRewardOffer } from '../game/equipment';
 import type { GameState } from '../game/rules';
 import { GameView } from './GameView';
@@ -23,9 +22,9 @@ describe('GameView (MGP6-03)', () => {
   });
 
   it('renders the hero and a regular enemy with their health', () => {
-    const { container } = render(<GameView gameState={makeGameState()} onEquip={() => undefined} />);
+    const { container } = render(<GameView gameState={makeGameState()} />);
     // Hero and enemy each render a single-heart row with an A/B counter.
-    const counters = Array.from(container.querySelectorAll('[class*="min-w-[70px]"]'));
+    const counters = Array.from(container.querySelectorAll('[class*="min-w-17"]'));
     expect(counters.map((c) => c.textContent)).toEqual(['12/12', '3/3']);
     expect(screen.getByRole('img', { name: 'Hero' }).getAttribute('src')).toContain('289px-Steve_in_leather_armor.png');
   });
@@ -43,14 +42,14 @@ describe('GameView (MGP6-03)', () => {
         queuedProblems: 2,
       },
     });
-    render(<GameView gameState={state} onEquip={() => undefined} />);
+    render(<GameView gameState={state} />);
     // The active heart (index 1) drives the A/B counter and the HEART N sublabel.
     expect(screen.getByText('HEART 2')).not.toBeNull();
     expect(screen.getByText('2 queued')).not.toBeNull();
   });
 
   it('renders the melee and range inventory slots with a dash when empty', () => {
-    render(<GameView gameState={makeGameState()} onEquip={() => undefined} />);
+    render(<GameView gameState={makeGameState()} />);
     // Armor is displayed on the hero, not as an inventory slot.
     expect(screen.getByText('Weapon')).not.toBeNull();
     expect(screen.getByText('Range')).not.toBeNull();
@@ -62,38 +61,28 @@ describe('GameView (MGP6-03)', () => {
 
   it('renders decorative stats derived from the loadout and solved count', () => {
     const { container } = render(
-      <GameView gameState={makeGameState({ solvedCount: 4 })} onEquip={() => undefined} />,
+      <GameView gameState={makeGameState({ solvedCount: 4 })} />,
     );
     expect(container.textContent).toContain('Solved:');
     expect(container.textContent).toContain('Attack');
     expect(container.textContent).toContain('Defence');
-    expect(container.textContent).toContain('Level');
+    expect(container.textContent).toContain('Hero Level');
   });
 
   it('does not render a reward group when no reward is pending', () => {
-    render(<GameView gameState={makeGameState({ pendingReward: null })} onEquip={() => undefined} />);
+    render(<GameView gameState={makeGameState({ pendingReward: null })} />);
     expect(screen.queryByRole('group', { name: 'Choose a reward' })).toBeNull();
   });
 
-  it('offers one selectable reward per active category and calls onEquip with that category', () => {
-    const onEquip = vi.fn();
+  it('does not render an inline reward panel when a reward is pending (reward is the modal overlay)', () => {
     const state = makeGameState({ solvedCount: 5, pendingReward: generateRewardOffer(5) });
-    render(<GameView gameState={state} onEquip={onEquip} />);
-    expect(screen.getByRole('group', { name: 'Choose a reward' })).not.toBeNull();
-
-    const weapon = state.pendingReward?.melee;
-    const range = state.pendingReward?.range;
-    expect(weapon).not.toBeNull();
-    expect(range).not.toBeNull();
-
-    fireEvent.click(screen.getByRole('button', { name: new RegExp(`${weapon?.name}.*Weapon`) }));
-    expect(onEquip).toHaveBeenCalledWith('melee' satisfies EquipmentCategory);
-    fireEvent.click(screen.getByRole('button', { name: new RegExp(`${range?.name}.*Range`) }));
-    expect(onEquip).toHaveBeenCalledWith('range');
+    render(<GameView gameState={state} />);
+    expect(screen.queryByRole('group', { name: 'Choose a reward' })).toBeNull();
+    expect(screen.queryByRole('dialog', { name: 'Choose a reward' })).toBeNull();
   });
 
   it('does not render a separate Next control', () => {
-    render(<GameView gameState={makeGameState()} onEquip={() => undefined} />);
+    render(<GameView gameState={makeGameState()} />);
     expect(screen.queryByRole('button', { name: 'Next' })).toBeNull();
   });
 });

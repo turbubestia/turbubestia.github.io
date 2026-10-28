@@ -95,51 +95,57 @@ export const AnswerEntry = forwardRef<AnswerEntryHandle, AnswerEntryProps>(funct
   const display = wrongValue ?? value;
 
   return (
-    <div className="flex w-40 min-w-0 max-w-sm flex-col items-center gap-3">
+    <div className="flex min-w-0 flex-col items-center gap-3">
       <div
         aria-live="polite"
-        className={`flex h-12 w-full items-center justify-center rounded-lg border font-mono text-2xl ${
-          wrongValue !== null ? 'border-red-500 bg-bg text-red-400' : 'border-panel-border bg-bg text-neutral-100'
+        className={`flex min-w-0 w-full items-center justify-center rounded border-2 font-rpg text-3xl ${
+          wrongValue !== null ? 'border-red-500 bg-rpg-slot text-red-400' : 'border-rpg-border-light bg-rpg-slot text-rpg-text'
         }`}
       >
-        {display === '' ? <span className="text-neutral-600">_</span> : display}
+        {display === '' ? <span className="animate-pulse text-rpg-border-light">_</span> : display}
       </div>
 
-      <div role="group" aria-label="Answer keypad" className="grid w-full grid-cols-3 gap-2">
+      <div role="group" aria-label="Answer keypad" className="grid w-full grid-cols-3 gap-1.5">
         {KEYPAD_DIGITS.map((digit) => (
-          <KeypadButton key={digit} 
-            onClick={() => appendDigit(digit)} 
+          <KeypadButton key={digit}
+            onClick={() => appendDigit(digit)}
             disabled={!accepting || nextEnabled}>
             {digit}
           </KeypadButton>
         ))}
-        <KeypadButton 
-          onClick={deleteDigit} 
-          disabled={!accepting || nextEnabled}>
+        <KeypadButton
+          onClick={deleteDigit}
+          disabled={!accepting || nextEnabled}
+          title="Backspace">
           ⌫
         </KeypadButton>
         <KeypadButton onClick={() => appendDigit('0')} disabled={!accepting || nextEnabled}>
           0
         </KeypadButton>
-        <KeypadButton
-          onClick={activateEnter}
-          disabled={!accepting || (!nextEnabled && value === '')}>
-          {nextEnabled ? 'Next' : 'Enter'}
-        </KeypadButton>
       </div>
+
+      <button
+        type="button"
+        onClick={activateEnter}
+        disabled={!accepting || (!nextEnabled && value === '')}
+        className="rpg-key-enter w-full py-3 font-pixel text-xs tracking-wider disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        {nextEnabled ? 'NEXT' : 'ENTER'}
+      </button>
     </div>
   );
 });
 
-function KeypadButton({ children, onClick, disabled }: {
-  children: string; onClick: () => void; disabled?: boolean; }) 
+function KeypadButton({ children, onClick, disabled, title }: {
+  children: string; onClick: () => void; disabled?: boolean; title?: string; })
 {
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="h-12 w-12 rounded-lg border border-panel-border bg-panel text-lg font-mono hover:bg-panel/70 disabled:cursor-not-allowed disabled:opacity-40"
+      title={title}
+      className="rpg-key aspect-square flex items-center justify-center font-pixel text-sm hover:bg-rpg-border hover:border-rpg-border-light disabled:cursor-not-allowed disabled:opacity-40"
     >
       {children}
     </button>

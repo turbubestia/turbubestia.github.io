@@ -8,24 +8,24 @@ interface DefeatOverlayProps {
 
 export function DefeatOverlay({ onRespawn, onEndSession }: DefeatOverlayProps) {
   return (
-    <div role="dialog" aria-modal="true" aria-label="Defeated" className="fixed inset-0 z-40 flex items-center justify-center bg-bg/80">
-      <div className="flex flex-col items-center gap-4 rounded-xl border border-panel-border bg-panel p-8">
-        <h2 className="text-xl font-semibold text-neutral-100">Defeated</h2>
-        <p className="text-sm text-neutral-400">The hero has fallen. Respawn to keep the encounter, or end the session.</p>
+    <div role="dialog" aria-modal="true" aria-label="Defeated" className="fixed inset-0 z-40 flex items-center justify-center bg-black/80 p-4">
+      <div className="rpg-box flex w-full max-w-sm flex-col items-center gap-4 p-8">
+        <h2 className="font-pixel text-base text-rose-400">DEFEATED</h2>
+        <p className="text-center text-lg text-rpg-text-dim">The hero has fallen. Respawn to keep the encounter, or end the session.</p>
         <div className="flex gap-3">
           <button
             type="button"
             onClick={onRespawn}
-            className="rounded-lg border border-panel-border bg-bg px-6 py-2 font-medium text-neutral-100 hover:bg-bg/70"
+            className="rpg-key-enter px-6 py-2 font-pixel text-xs tracking-wider"
           >
-            Respawn
+            RESPAWN
           </button>
           <button
             type="button"
             onClick={onEndSession}
-            className="rounded-lg border border-panel-border bg-bg px-6 py-2 text-neutral-300 hover:bg-bg/70"
+            className="rpg-key px-6 py-2 font-pixel text-xs tracking-wider hover:bg-rpg-border hover:border-rpg-border-light"
           >
-            End session
+            END SESSION
           </button>
         </div>
       </div>

@@ -4,4 +4,70 @@
   --color-bg: #202020;
   --color-panel: #303030;
   --color-panel-border: #808080;
+
+  /* RPG theme (Mathcraft Games) */
+  --color-rpg-bg: #0b0f19;
+  --color-rpg-panel: #151d2a;
+  --color-rpg-panel-deep: #0f172a;
+  --color-rpg-slot: #090d16;
+  --color-rpg-border: #334155;
+  --color-rpg-border-light: #64748b;
+  --color-rpg-key: #1e293b;
+  --color-rpg-text: #e2e8f0;
+  --color-rpg-text-dim: #94a3b8;
+  --color-rpg-carry: #fbbf24;
+  --color-rpg-highlight: #4ade80;
+  --color-rpg-enter: #15803d;
+  --color-rpg-enter-border: #22c55e;
+
+  --font-pixel: "Press Start 2P", cursive;
+  --font-rpg: "VT323", monospace;
+}
+
+/* RPG panel box: dark gradient fill, 3px slate border, inset shadows. */
+@utility rpg-box {
+  background: linear-gradient(180deg, var(--color-rpg-panel) 0%, var(--color-rpg-panel-deep) 100%);
+  border: 3px solid var(--color-rpg-border);
+  box-shadow:
+    inset 0 0 0 1px #1e293b,
+    inset 0 0 12px rgba(0, 0, 0, 0.8),
+    0 8px 20px rgba(0, 0, 0, 0.8);
+  border-radius: 8px;
+}
+
+/* RPG app background: near-black blue with subtle grid texture and radial glow. */
+@utility rpg-bg {
+  background-color: var(--color-rpg-bg);
+  background-image:
+    radial-gradient(circle at 50% 20%, rgba(30, 41, 59, 0.25) 0%, transparent 60%),
+    linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+  background-size: 100% 100%, 24px 24px, 24px 24px;
+}
+
+/* RPG equipment slot / inset surface. */
+@utility rpg-slot {
+  background: var(--color-rpg-slot);
+  border: 2px solid var(--color-rpg-border);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.9);
+  border-radius: 4px;
+}
+
+/* Flat square keypad key. */
+@utility rpg-key {
+  background: var(--color-rpg-key);
+  border: 1px solid var(--color-rpg-border);
+  border-radius: 0;
+  color: #f8fafc;
+  transition: all 0.05s ease;
+  box-shadow: none;
+}
+
+/* Flat green Enter/Next key. */
+@utility rpg-key-enter {
+  background: var(--color-rpg-enter);
+  border: 1px solid var(--color-rpg-enter-border);
+  border-radius: 0;
+  color: #ffffff;
+  transition: all 0.05s ease;
 }
