@@ -1,14 +1,14 @@
 # Math Domain
 
-The math domain operates with a logic that is mostly independent of the game. In the future the math domain could be conditioned by input state and events to configure to the current game state or react to game-generated interactions. So far the math domain considers additions, subtractions, and multiplications, however it must be designed as generic enough to be able to implement other problems such as fractions or division (however these two are out of scope in this version).
+The math domain operates with a logic that is mostly independent of the game. In the future the math domain could be conditioned by input state and events to configure to the current game state or react to game-generated interactions. So far the math domain considers additions, subtractions, and multiplications; however it must be designed as generic enough to be able to implement other problems such as fractions or division (however these two are out of scope in this version).
 
-All operations use a unified multi-digit model where single digit operations are a degenerated version which should not be handled separately or as an special case. All the logic must be valid for single or multi-digits. The student can configure the digit count for each operand independently (typically 1–4 digits) and, where applicable, whether generated steps may or may not require carrying or borrowing. The first digit of each operand must be non-zero; the result size is not separately constrained by the configuration.
+All operations use a unified multi-digit model where single digit operations are a degenerated version which should not be handled separately or as a special case. All the logic must be valid for single or multi-digits. The student can configure the digit count for each operand independently (typically 1–4 digits) and, where applicable, whether generated steps may or may not require carrying or borrowing. The first digit of each operand must be non-zero; the result size is not separately constrained by the configuration.
 
 The problem set includes the following operation types:
 
 - **Addition:** the student configures the digit count for each operand independently and whether generated addition steps may or may not require carrying. "Allowed" means a generated problem may or may not include that carry step; "required" means every generated problem includes at least one carry step; "forbidden" means no step produces a carry.
 - **Subtraction:** the student configures the digit count for each operand independently and whether generated subtraction steps may or may not require borrowing. "Allowed" means a generated problem may or may not include that borrow step; "required" means every generated problem includes at least one borrow step; "forbidden" means no step requires borrowing.
-- **Multiplication:** the student configures operand digit counts and whether the single-digit multiplication steps require carrying. The same carry modes apply as for addition. The student can also select the factor range via `minFactor` and `maxFactor` which should apply for each digit of both operands.
+- **Multiplication:** the student configures operand digit counts and whether the single-digit multiplication steps require carrying. The same carry modes apply as for addition.
 
 For generation behavior, the specific probability distribution is intentionally out of scope for this task. Random generation is acceptable as long as every generated problem satisfies the selected configuration. To avoid confusing repeated work for students, consecutive problems must not repeat the exact same operands; for example, `2 x 4` followed by `2 x 4` is not allowed, while `2 x 4` followed by `4 x 2` is allowed because the operands are not identical in sequence.
 
@@ -219,7 +219,7 @@ number  [1]
 number  [1]
 ```
 
-However this is the same for any single product that results in 9 or less, so 1x1 is not realy a specia case. In multi-digit multiplication or additions, if the last digit operation also result in less than 9 the no extra digits are nedded in the results. The global rule for the number of columns in the matrix cell is the length of the result, for instance, 10x10 results in 100 so we only need tree columns, while 50x50 is 2500 and we need four. Neither the single digit or a 1x1 case should need special care aor handling.
+However this is the same for any single product that results in 9 or less, so 1x1 is not really a special case. In multi-digit multiplication or additions, if the last digit operation also results in less than 9, no extra digits are needed in the results. The global rule for the number of columns in the matrix cell is the length of the result; for instance, 10x10 results in 100 so we only need three columns, while 50x50 is 2500 and we need four. Neither the single digit or a 1x1 case should need special care or handling.
 
 ### Presentation Boundary
 

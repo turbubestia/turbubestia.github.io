@@ -17,22 +17,7 @@ export interface MathSolvedEvent {
   totalSteps: number;
 }
 
-export interface BossHeartInit {
-  problemId: string;
-  health: number;
-}
-
-export interface MathBossStartEvent {
-  type: 'boss_start';
-  queuedProblems: number;
-  hearts: readonly BossHeartInit[];
-}
-
-export interface MathBossEndEvent {
-  type: 'boss_end';
-}
-
-export type MathEvent = MathHitEvent | MathSolvedEvent | MathBossStartEvent | MathBossEndEvent;
+export type MathEvent = MathHitEvent | MathSolvedEvent;
 
 export interface LifecycleSubmitResult {
   status: SubmissionStatus;

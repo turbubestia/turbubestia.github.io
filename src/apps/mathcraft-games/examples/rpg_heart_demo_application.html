@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minecraft Dungeons RPG Heart UI</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- React & ReactDOM CDN -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <!-- Babel Standalone for JSX transformation -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- Google Fonts for RPG Typography -->
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'VT323', monospace;
+      background-color: #0b0f19;
+      background-image: 
+        radial-gradient(circle at 50% 30%, rgba(159, 18, 57, 0.15) 0%, transparent 60%),
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 100% 100%, 32px 32px, 32px 32px;
+    }
+    .font-pixel {
+      font-family: 'Press Start 2P', cursive;
+    }
+  </style>
+</head>
+<body class="min-h-screen text-slate-100 flex flex-col items-center justify-center p-4">
+
+  <!-- React Mount Root -->
+  <div id="root" class="w-full max-w-3xl"></div>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    // Single RPG Heart Component
+    const RPGHeart = ({ selectedHeartIndex, heartIndex, currentHp, totalHp, size = 56 }) => {
+      let fillFraction = 0;
+      if (heartIndex < selectedHeartIndex) {
+        fillFraction = 0; // Hearts before selected index are empty
+      } else if (heartIndex === selectedHeartIndex) {
+        fillFraction = totalHp > 0 ? Math.max(0, Math.min(1, currentHp / totalHp)) : 0; // Proportional A/B
+      } else {
+        fillFraction = 1; // Hearts after selected index are fully filled
+      }
+
+      const fillPercentage = Math.round(fillFraction * 100);
+
+      return (
+        <div
+          className="relative inline-block select-none filter drop-shadow-[0_6px_8px_rgba(0,0,0,0.8)] transition-transform duration-200 hover:scale-105"
+          style={{ width: size, height: size }}
+          title={`Heart ${heartIndex + 1}: ${
+            heartIndex === selectedHeartIndex
+              ? `${currentHp}/${totalHp} HP`
+              : heartIndex < selectedHeartIndex
+              ? 'Empty'
+              : 'Full'
+          }`}
+        >
+          {/* Base Dark Metal Border Frame */}
+          <svg viewBox="0 0 16 16" className="absolute inset-0 w-full h-full text-slate-950" shapeRendering="crispEdges">
+            <path fill="currentColor" d="M3 1h3v1h1v1h2V2h1V1h3v1h1v3h-1v2h-1v2h-1v2h-1v2H7v-2H6v-2H5V7H4V5H3V2h0z" />
+            <path fill="#180a10" d="M3 2h3v1h1v1h2V3h1V2h3v3h-1v2h-1v2h-1v2H8v-2H7V9H6V7H5V5H4V2h-1z" />
+            <path fill="#2e0811" d="M4 3h2v1h1v1h2V4h1V3h2v2h-1v2h-1v2H9v1H8v-1H7V9H6V7H5V5H4V3z" />
+          </svg>
+
+          {/* Dynamic Fill Overlay */}
+          <div
+            className="absolute inset-0 w-full h-full overflow-hidden transition-all duration-300 ease-out"
+            style={{ clipPath: `inset(${100 - fillPercentage}% 0 0 0)` }}
+          >
+            <svg viewBox="0 0 16 16" className="w-full h-full" shapeRendering="crispEdges">
+              <path fill="#f43f5e" d="M3 2h3v1h1v1h2V3h1V2h3v3h-1v2h-1v2h-1v2H8v-2H7V9H6V7H5V5H4V2h-1z" />
+              <path fill="#be123c" d="M4 5v1h1v2h1v2h1v2h2v-2h1V8h1V6h1V5h-1v2h-1v2H9v1H8v-1H7V9H6V7H5V5H4z" />
+              <path fill="#881337" d="M7 11h2v1H7v-1zM6 9h1v2H6V9zM5 7h1v2H5V7z" />
+              <path fill="#ffe4e6" d="M4 3h1v1H4V3zM4 4h2v1H4V4z" />
+              <path fill="#ffffff" d="M4 3h1v1H4V3z" />
+            </svg>
+          </div>
+
+          {/* Active Target Indicator Ring */}
+          {heartIndex === selectedHeartIndex && (
+            <div className="absolute -inset-1.5 rounded-md border-2 border-amber-400/90 animate-pulse pointer-events-none shadow-[0_0_12px_rgba(251,191,36,0.6)]" />
+          )}
+        </div>
+      );
+    };
+
+    // Main Interactive HUD Application
+    const App = () => {
+      const [selectedHeartIndex, setSelectedHeartIndex] = useState(1); // 0, 1, or 2
+      const [currentHp, setCurrentHp] = useState(3);                   // A
+      const [totalHp, setTotalHp] = useState(8);                       // B
+      const maxHearts = 3;
+
+      // Handle Damage / Heal presets
+      const handleTakeDamage = (amount) => {
+        setCurrentHp(prev => Math.max(0, prev - amount));
+      };
+
+      const handleHeal = (amount) => {
+        setCurrentHp(prev => Math.min(totalHp, prev + amount));
+      };
+
+      return (
+        <div className="flex flex-col items-center justify-center gap-8">
+          
+          {/* Header Title */}
+          <div className="text-center space-y-2">
+            <h1 className="font-pixel text-2xl md:text-3xl text-amber-400 drop-shadow-[0_4px_0_rgba(120,53,15,0.8)] tracking-wider">
+              DUNGEON HEALTH HUD
+            </h1>
+            <p className="text-slate-400 text-lg tracking-wide">
+              Minecraft Dungeons Style Heart Bar Subsystem Component
+            </p>
+          </div>
+
+          {/* Main Display HUD Container */}
+          <div className="p-8 bg-slate-900/90 border-4 border-amber-900/80 rounded-2xl shadow-[0_0_30px_rgba(0,0,0,0.8)] flex flex-col items-center gap-6 backdrop-blur-md w-full">
+            
+            <div className="text-amber-300 font-pixel text-xs tracking-widest uppercase opacity-80">
+              Player Combat State Render
+            </div>
+
+            {/* Heart Row Component */}
+            <div className="inline-flex items-center gap-4 bg-slate-950/95 border-2 border-amber-700/50 p-4 rounded-xl shadow-2xl">
+              
+              {/* Up to 3 Hearts in a Row */}
+              <div className="flex items-center gap-3">
+                {Array.from({ length: maxHearts }).map((_, index) => (
+                  <RPGHeart
+                    key={index}
+                    heartIndex={index}
+                    selectedHeartIndex={selectedHeartIndex}
+                    currentHp={currentHp}
+                    totalHp={totalHp}
+                    size={64}
+                  />
+                ))}
+              </div>
+
+              {/* A / B Counter Attached to Rightmost Heart */}
+              <div className="flex flex-col justify-center min-w-[85px] px-4 py-1.5 bg-gradient-to-b from-slate-900 to-slate-950 border border-amber-500/40 rounded-lg shadow-inner select-none">
+                <div className="flex items-baseline justify-center gap-1">
+                  <span className="text-3xl font-black text-rose-400 drop-shadow-[0_2px_8px_rgba(225,29,72,0.9)]">
+                    {currentHp}
+                  </span>
+                  <span className="text-lg font-bold text-amber-500/70">/</span>
+                  <span className="text-xl font-bold text-slate-300">
+                    {totalHp}
+                  </span>
+                </div>
+                <div className="text-[12px] text-amber-400/90 uppercase font-bold text-center tracking-widest border-t border-slate-800/80 mt-0.5 pt-0.5">
+                  HEART {selectedHeartIndex + 1}
+                </div>
+              </div>
+
+            </div>
+
+            {/* Status Legend */}
+            <div className="grid grid-cols-3 gap-3 w-full text-center text-sm text-slate-300 bg-slate-950/60 p-3 rounded-lg border border-slate-800">
+              <div>
+                <span className="text-slate-500 block text-xs">HEARTS &lt; {selectedHeartIndex + 1}</span>
+                <span className="font-bold text-rose-900">EMPTY</span>
+              </div>
+              <div>
+                <span className="text-amber-400 font-bold block text-xs">ACTIVE HEART {selectedHeartIndex + 1}</span>
+                <span className="font-bold text-amber-300">{Math.round((currentHp/totalHp)*100)}% ({currentHp}/{totalHp})</span>
+              </div>
+              <div>
+                <span className="text-slate-500 block text-xs">HEARTS &gt; {selectedHeartIndex + 1}</span>
+                <span className="font-bold text-rose-500">FULLY FILLED</span>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Interactive Controls & State Inputs */}
+          <div className="w-full bg-slate-900/80 border-2 border-slate-800 rounded-xl p-6 shadow-xl flex flex-col gap-6">
+            
+            <h2 className="font-pixel text-sm text-amber-400/90 border-b border-slate-800 pb-2">
+              INPUT STATE CONTROLS
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              
+              {/* Selected Heart Index Input */}
+              <div className="flex flex-col gap-2">
+                <label className="text-slate-300 font-bold text-base flex justify-between">
+                  <span>Selected Index:</span>
+                  <span className="text-amber-400 font-mono text-xl">{selectedHeartIndex} (Heart #{selectedHeartIndex + 1})</span>
+                </label>
+                <div className="flex gap-2">
+                  {[0, 1, 2].map((idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setSelectedHeartIndex(idx)}
+                      className={`flex-1 py-2 rounded-lg font-bold border transition-all ${
+                        selectedHeartIndex === idx
+                          ? 'bg-amber-500 text-slate-950 border-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.5)]'
+                          : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+                      }`}
+                    >
+                      Heart #{idx + 1}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Current HP Input (A) */}
+              <div className="flex flex-col gap-2">
+                <label className="text-slate-300 font-bold text-base flex justify-between">
+                  <span>Current HP (A):</span>
+                  <span className="text-rose-400 font-mono text-xl">{currentHp}</span>
+                </label>
+                <input
+                  type="range"
+                  min="0"
+                  max={totalHp}
+                  value={currentHp}
+                  onChange={(e) => setCurrentHp(Number(e.target.value))}
+                  className="w-full accent-rose-500 cursor-pointer h-2 bg-slate-800 rounded-lg"
+                />
+                <div className="flex gap-2 mt-1">
+                  <button
+                    onClick={() => handleTakeDamage(1)}
+                    className="flex-1 py-1 text-sm bg-rose-950 hover:bg-rose-900 text-rose-200 border border-rose-800 rounded font-bold"
+                  >
+                    -1 HP
+                  </button>
+                  <button
+                    onClick={() => handleHeal(1)}
+                    className="flex-1 py-1 text-sm bg-emerald-950 hover:bg-emerald-900 text-emerald-200 border border-emerald-800 rounded font-bold"
+                  >
+                    +1 HP
+                  </button>
+                </div>
+              </div>
+
+              {/* Total HP Input (B) */}
+              <div className="flex flex-col gap-2">
+                <label className="text-slate-300 font-bold text-base flex justify-between">
+                  <span>Total HP (B):</span>
+                  <span className="text-slate-200 font-mono text-xl">{totalHp}</span>
+                </label>
+                <input
+                  type="range"
+                  min="1"
+                  max="20"
+                  value={totalHp}
+                  onChange={(e) => {
+                    const newTotal = Number(e.target.value);
+                    setTotalHp(newTotal);
+                    if (currentHp > newTotal) setCurrentHp(newTotal);
+                  }}
+                  className="w-full accent-amber-500 cursor-pointer h-2 bg-slate-800 rounded-lg"
+                />
+                <div className="flex gap-2 mt-1">
+                  <button
+                    onClick={() => setTotalHp(4)}
+                    className="flex-1 py-1 text-sm bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded"
+                  >
+                    Preset: 4
+                  </button>
+                  <button
+                    onClick={() => setTotalHp(10)}
+                    className="flex-1 py-1 text-sm bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded"
+                  >
+                    Preset: 10
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+      );
+    };
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

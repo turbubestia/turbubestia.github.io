@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { MathEvent } from '../math/lifecycle';
+import type { BossStartMessage } from './bossTypes';
 import { REWARD_TIER_SOLVE_INTERVAL } from './equipment';
 import { GameRules, HERO_MAX_HEALTH, RESPAWN_HEALTH } from './rules';
 
@@ -21,10 +22,10 @@ const wrongHit = (value: number): MathEvent => ({
 
 const solved = (): MathEvent => ({ type: 'solved', problemId: 'p1', totalSteps: 3 });
 
-const bossStart = (hearts: { problemId: string; health: number }[]): MathEvent => ({
+const bossStart = (hearts: { problemId: string; health: number }[]): BossStartMessage => ({
   type: 'boss_start',
   queuedProblems: hearts.length,
-  hearts,
+  hearts: hearts.map((h) => ({ problemId: h.problemId, health: h.health })),
 });
 
 describe('game rules: combat resolution', () => {
@@ -243,7 +244,7 @@ describe('game rules: timed reward offers and decorative stats', () => {
 
     game.offerReward();
 
-    expect(game.state.pendingReward?.['hand-weapon']?.tier).toBe(1);
+    expect(game.state.pendingReward?.melee?.tier).toBe(1);
     expect(game.state.pendingReward?.bow?.tier).toBe(1);
   });
 
@@ -255,7 +256,7 @@ describe('game rules: timed reward offers and decorative stats', () => {
 
     game.offerReward();
 
-    expect(game.state.pendingReward?.['hand-weapon']?.tier).toBe(2);
+    expect(game.state.pendingReward?.melee?.tier).toBe(2);
     expect(game.state.pendingReward?.bow?.tier).toBe(2);
   });
 
@@ -263,9 +264,9 @@ describe('game rules: timed reward offers and decorative stats', () => {
     const game = new GameRules();
     game.offerReward();
 
-    const equipped = game.equipItem('hand-weapon');
+    const equipped = game.equipItem('melee');
     expect(equipped).not.toBeNull();
-    expect(game.state.loadout['hand-weapon']?.tier).toBe(1);
+    expect(game.state.loadout.melee?.tier).toBe(1);
     expect(game.state.loadout.bow).toBeNull();
     expect(game.state.pendingReward).toBeNull();
   });
@@ -278,7 +279,7 @@ describe('game rules: timed reward offers and decorative stats', () => {
   it('keeps decorative display stats separate from combat outcomes', () => {
     const withGear = new GameRules();
     withGear.offerReward();
-    withGear.equipItem('hand-weapon');
+    withGear.equipItem('melee');
 
     const bare = new GameRules();
     // Same combat sequence on both engines.

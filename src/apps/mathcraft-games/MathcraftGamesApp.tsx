@@ -1,30 +1,27 @@
 import { useEffect, useRef, useState } from 'react';
+
+import { SetupView } from './components/SetupView';
 import { AnswerEntry, type AnswerEntryHandle } from './components/AnswerEntry';
 import { DefeatOverlay } from './components/DefeatOverlay';
 import { EndSessionConfirm } from './components/EndSessionConfirm';
 import { GameView } from './components/GameView';
 import { PauseOverlay } from './components/PauseOverlay';
 import { ProblemWorkDisplay } from './components/ProblemWorkDisplay';
-import { SetupView } from './components/SetupView';
 import { SummaryView } from './components/SummaryView';
-import { useMathcraftSession, type UseMathcraftSessionResult } from './hooks/useMathcraftSession';
+
 import type { SessionOptions, SessionSetup } from './session/session';
 
-// App entry (MGP6-01, MGP6-06). Owns the setup→session lifecycle: renders the
-// setup view until a finalized SessionSetup exists, then mounts the active
-// experience. The active experience is a separate component so that
-// useMathcraftSession(finalizedSetup) — and therefore the coordinator, which is
-// constructed once at mount with a fixed enabledConfigs — only comes into
-// existence after the student/adult starts.
+import { useMathcraftSession, type UseMathcraftSessionResult } from './hooks/useMathcraftSession';
 
 interface MathcraftGamesAppProps {
-  /** Optional session options (injectable time source / random) for deterministic tests. */
+  // Optional session options (injectable time source / random) for deterministic tests.
   sessionOptions?: SessionOptions;
-  /** Observability seam: reports the full hook result after each render (used by tests). */
+  // Observability seam: reports the full hook result after each render (used by tests).
   onResult?: (result: UseMathcraftSessionResult) => void;
 }
 
 export function MathcraftGamesApp({ sessionOptions, onResult }: MathcraftGamesAppProps = {}) {
+
   const [setup, setSetup] = useState<SessionSetup | null>(null);
 
   if (setup === null) {
@@ -34,16 +31,13 @@ export function MathcraftGamesApp({ sessionOptions, onResult }: MathcraftGamesAp
   return <ActiveExperience setup={setup} sessionOptions={sessionOptions} onResult={onResult} />;
 }
 
-function ActiveExperience({
-  setup,
-  sessionOptions,
-  onResult,
-}: {
+function ActiveExperience({ setup, sessionOptions, onResult, }: {
   setup: SessionSetup;
   sessionOptions?: SessionOptions;
   onResult?: (result: UseMathcraftSessionResult) => void;
 }) {
   const result = useMathcraftSession(setup, sessionOptions);
+
   const {
     snapshot,
     start,
@@ -64,7 +58,9 @@ function ActiveExperience({
   }, [result, onResult]);
 
   const entryRef = useRef<AnswerEntryHandle>(null);
+  
   const [isEndSessionConfirmOpen, setIsEndSessionConfirmOpen] = useState(false);
+
   // Whether the answer entry currently accepts input (false during the
   // wrong-answer feedback interval or when externally disabled).
   const [accepting, setAccepting] = useState(true);

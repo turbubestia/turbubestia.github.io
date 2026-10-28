@@ -47,13 +47,14 @@ describe('GameView (MGP6-03)', () => {
     expect(screen.getByText('Heart 2 of 3 · 2 queued')).not.toBeNull();
   });
 
-  it('renders the two equipment slots with a dash when empty', () => {
+  it('renders the three equipment slots with a dash when empty', () => {
     render(<GameView gameState={makeGameState()} onEquip={() => undefined} />);
     expect(screen.getByText('Weapon')).not.toBeNull();
     expect(screen.getByText('Bow')).not.toBeNull();
-    // Both slots show the empty placeholder.
+    expect(screen.getByText('Armor')).not.toBeNull();
+    // All three slots show the empty placeholder.
     const dashes = screen.getAllByText('—');
-    expect(dashes).toHaveLength(2);
+    expect(dashes).toHaveLength(3);
   });
 
   it('renders decorative stats derived from the loadout and solved count', () => {
@@ -77,13 +78,13 @@ describe('GameView (MGP6-03)', () => {
     render(<GameView gameState={state} onEquip={onEquip} />);
     expect(screen.getByRole('group', { name: 'Choose a reward' })).not.toBeNull();
 
-    const weapon = state.pendingReward?.['hand-weapon'];
+    const weapon = state.pendingReward?.melee;
     const bow = state.pendingReward?.bow;
     expect(weapon).not.toBeNull();
     expect(bow).not.toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: new RegExp(`${weapon?.name}.*Weapon`) }));
-    expect(onEquip).toHaveBeenCalledWith('hand-weapon' satisfies EquipmentCategory);
+    expect(onEquip).toHaveBeenCalledWith('melee' satisfies EquipmentCategory);
     fireEvent.click(screen.getByRole('button', { name: new RegExp(`${bow?.name}.*Bow`) }));
     expect(onEquip).toHaveBeenCalledWith('bow');
   });

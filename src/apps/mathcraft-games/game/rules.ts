@@ -1,4 +1,5 @@
-import type { BossHeartInit, MathEvent } from '../math/lifecycle';
+import type { BossHeartInit, BossStartMessage, BossEndMessage } from './bossTypes';
+import type { MathEvent } from '../math/lifecycle';
 import {
   computeDisplayStats,
   EMPTY_LOADOUT,
@@ -97,8 +98,8 @@ export class GameRules {
     };
   }
 
-  /** Apply a generic math event and derive the resulting game state. */
-  applyEvent(event: MathEvent): ApplyEventResult {
+  /** Apply a generic math event or boss message and derive the resulting game state. */
+  applyEvent(event: MathEvent | BossStartMessage | BossEndMessage): ApplyEventResult {
     if (this.hero.defeated) {
       return { status: 'ignored', reason: 'hero-defeated' };
     }

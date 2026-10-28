@@ -1,15 +1,17 @@
-import armorManifest from '../assets/armor-sets/assets.json';
+
+// Import Assets
 import bossManifest from '../assets/boss/assets.json';
 import mobManifest from '../assets/mobs/assets.json';
+
+// Game Logic
 import type { EquipmentCategory, EquipmentItem } from '../game/equipment';
-import { EQUIPMENT_CATEGORIES, computeDisplayStats } from '../game/equipment';
+import { EQUIPMENT_CATEGORIES, EQUIPMENT_DISPLAY_CATEGORIES, computeDisplayStats } from '../game/equipment';
 import type { GameState } from '../game/rules';
+
+// Game Components
 import { HealthHearts } from './HealthHearts';
 import { PlaceholderArt } from './PlaceholderArt';
 
-// Combat presentation (MGP6-03). Renders hero/enemy/boss state, equipment and
-// decorative stats, and reward choices purely from supplied game state; user
-// actions are forwarded through callbacks.
 
 interface GameViewProps {
   gameState: GameState;
@@ -17,13 +19,15 @@ interface GameViewProps {
 }
 
 const CATEGORY_LABELS: Record<EquipmentCategory, string> = {
-  'hand-weapon': 'Weapon',
-  bow: 'Bow',
+  'melee': 'Weapon',
+  'bow': 'Range',
+  'armor': 'Armor',
 };
 
-const ASSET_FOLDERS: Record<EquipmentCategory, 'weapons'> = {
-  'hand-weapon': 'weapons',
-  bow: 'weapons',
+const ASSET_FOLDERS: Record<EquipmentCategory, 'weapons' | 'armor-sets'> = {
+  'melee': 'weapons',
+  'bow': 'weapons',
+  'armor': 'armor-sets',
 };
 
 function assetUrl(folder: 'weapons' | 'armor-sets' | 'mobs' | 'boss', filename: string): string {
@@ -38,11 +42,11 @@ function assetForItem(item: EquipmentItem | null): string | null {
   return assetUrl(folder, item.filename);
 }
 
-function heroAssetUrl(): string {
-  const lowestTierArmor = (armorManifest as Array<{ filename: string; tier: number }>).reduce(
-    (lowest, armor) => (armor.tier < lowest.tier ? armor : lowest),
-  );
-  return assetUrl('armor-sets', lowestTierArmor?.filename ?? '289px-Steve_in_leather_armor.png');
+function heroAssetUrl(equippedArmor: EquipmentItem | null): string {
+  if (equippedArmor) {
+    return assetUrl('armor-sets', equippedArmor.filename);
+  }
+  return assetUrl('armor-sets', '289px-Steve_in_leather_armor.png');
 }
 
 function regularEnemyAssetUrl(encounter: Extract<GameState['encounter'], { kind: 'regular' }>): string {
@@ -68,7 +72,7 @@ export function GameView({ gameState, onEquip }: GameViewProps) {
   return (
     <div className="flex min-w-0 flex-col gap-4">
       <div className="flex flex-wrap gap-2">
-        {EQUIPMENT_CATEGORIES.map((category) => {
+        {EQUIPMENT_DISPLAY_CATEGORIES.map((category) => {
           const item = loadout[category];
           const imgSrc = assetForItem(item);
           return (
@@ -92,7 +96,7 @@ export function GameView({ gameState, onEquip }: GameViewProps) {
           <span className="text-xs text-neutral-500">Solved: {solvedCount}</span>
         </div>
         <div className="flex min-w-0 justify-center gap-3">
-          <HeroPanel hero={hero} />
+          <HeroPanel hero={hero} equippedArmor={loadout.armor} />
           <EncounterPanel encounter={encounter} />
         </div>
       </div>
@@ -135,11 +139,11 @@ function Stat({ label, value }: { label: string; value: number }) {
   );
 }
 
-function HeroPanel({ hero }: { hero: GameState['hero'] }) {
+function HeroPanel({ hero, equippedArmor }: { hero: GameState['hero']; equippedArmor: EquipmentItem | null }) {
   return (
     <div className="flex flex-col items-center gap-2">
       <HealthHearts current={hero.health} max={hero.maxHealth} label="Hero health" />
-      <PlaceholderArt name="Hero" src={heroAssetUrl()} alt="Hero" />
+      <PlaceholderArt name="Hero" src={heroAssetUrl(equippedArmor)} alt="Hero" />
     </div>
   );
 }

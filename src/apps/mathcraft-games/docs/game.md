@@ -1,12 +1,12 @@
 # Game Domain
 
-The game domain mimics an RPG hero with inventory against a single enemy. When the student selects the Mathcraft app from the apps registry, the session coordinator presents the session setup. The student then selects one of three hero skins after pressing the start button. After the skin selection (which is either Alex or Steve in leather armor set), the actual Mathcraft game begins. 
+The game domain mimics an RPG hero with inventory against a single enemy. When the student selects the Mathcraft app from the apps registry, the session coordinator presents the session setup. The student then selects a hero skin after pressing the start button. After the skin selection, the actual Mathcraft game begins. 
 
 # Basic Game Logic
 
 The hero has a maximum health of 12 HP while enemies will have hit points matching the total correct-hit damage budget for the current math problem. The game does not need to know the problem; the session coordinator sets this value when spawning a new enemy.
 
-The inputs for the game domain comes from the math domain through the session coordinator (or game controller). It react to two event types: `hit` and `solved`.
+The inputs for the game domain come from the math domain through the session coordinator (or game controller). It reacts to two event types: `hit` and `solved`.
 - A wrong hit (`hit` event with outcome `wrong`) damages the hero by the hit event’s `value`.
 - A correct hit (`hit` event with outcome `correct`) damages the current enemy by the hit event’s `value`.
 - Health at zero or less means the hero is defeated; the game must not require health to equal exactly zero.
@@ -27,7 +27,7 @@ A boss appears every five minutes of active session time. The session timer paus
 
 The student finishes the active problem before a due boss appears. For a scheduled five-minute boss, the session timer continues while the student finishes that problem; it pauses when the boss fight begins. If the timer expires during an active problem, the student completes that problem and emits its `solved` event before the session-ending boss appears. The same rule applies to scheduled boss triggers. After the session-ending boss is defeated, the session summary is shown.
 
-Each boss has three hearts and requires three solved problems to defeat. When a boss becomes due, the game controller prepares the next three problems as a queue. Each queued problem corresponds to one boss heart, and its correct-hit damage budget supplies that heart’s health. Correct hit events damage the current heart; the solved event completes that heart’s problem and advances the fight to the next queued problem/heart. The game does not need to know the queued problems’ operations. Starting and ending the encounter are manage by the session coordinator.
+Each boss has three hearts and requires three solved problems to defeat. When a boss becomes due, the game controller prepares the next three problems as a queue. Each queued problem corresponds to one boss heart, and its correct-hit damage budget supplies that heart’s health. Correct hit events damage the current heart; the solved event completes that heart’s problem and advances the fight to the next queued problem/heart. The game does not need to know the queued problems’ operations. Starting and ending the encounter are managed by the session coordinator.
 
 Boss triggers that occur while one boss is already pending are coalesced into a single pending boss rather than stacked as overlapping encounters. If a scheduled five-minute trigger coincides with session expiration, it is one boss encounter, not two. Two timers operate independently during gameplay: the **session timer** drives boss triggers and session expiry (it pauses during boss fights), while the **reward timer** drives equipment offers (it continues during boss fights). A reward that becomes due while a problem is in progress is offered when that problem is solved.
 

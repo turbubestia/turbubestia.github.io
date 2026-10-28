@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mathcraft Games - RPG Domain UI Layout Mockup</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- React & ReactDOM CDN -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <!-- Babel Standalone for JSX transformation -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- Google Fonts for Pixel RPG Typography -->
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+  <!-- FontAwesome for RPG Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    body {
+      font-family: 'VT323', monospace;
+      background-color: #0b0f19;
+      background-image: 
+        radial-gradient(circle at 50% 20%, rgba(30, 41, 59, 0.25) 0%, transparent 60%),
+        linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+      background-size: 100% 100%, 24px 24px, 24px 24px;
+      color: #e2e8f0;
+      image-rendering: pixelated;
+    }
+
+    .font-pixel {
+      font-family: 'Press Start 2P', cursive;
+    }
+
+    /* Custom Subdued RPG Border Box Styling (Neutral Slate/Iron Gray) */
+    .rpg-box {
+      background: linear-gradient(180deg, #151d2a 0%, #0f172a 100%);
+      border: 3px solid #334155;
+      box-shadow: 
+        inset 0 0 0 1px #1e293b,
+        inset 0 0 12px rgba(0, 0, 0, 0.8),
+        0 8px 20px rgba(0, 0, 0, 0.8);
+      border-radius: 8px;
+    }
+
+    .rpg-slot {
+      background: #090d16;
+      border: 2px solid #334155;
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.9);
+      border-radius: 4px;
+      transition: all 0.15s ease;
+    }
+
+    .rpg-slot:hover {
+      border-color: #64748b;
+      box-shadow: inset 0 0 8px rgba(100, 116, 139, 0.3);
+    }
+
+    /* FLAT & SQUARE KEYPAD BUTTON STYLING */
+    .keypad-btn-flat {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 0px; /* Completely square */
+      color: #f8fafc;
+      transition: all 0.05s ease;
+      box-shadow: none;
+    }
+    .keypad-btn-flat:hover {
+      background: #334155;
+      border-color: #64748b;
+      color: #f1f5f9;
+    }
+    .keypad-btn-flat:active {
+      background: #0f172a;
+      border-color: #475569;
+      transform: scale(0.98);
+    }
+
+    .keypad-btn-enter-flat {
+      background: #15803d;
+      border: 1px solid #22c55e;
+      border-radius: 0px;
+      color: #ffffff;
+      transition: all 0.05s ease;
+    }
+    .keypad-btn-enter-flat:hover {
+      background: #166534;
+      border-color: #4ade80;
+    }
+    .keypad-btn-enter-flat:active {
+      background: #14532d;
+      transform: scale(0.98);
+    }
+
+    /* Pixelated Canvas Render Container */
+    .pixel-render {
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+  </style>
+</head>
+<body class="min-h-screen p-4 md:p-6 flex flex-col items-center justify-center">
+
+  <div id="root" class="w-full max-w-7xl"></div>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    // Single RPG Heart Component (Reusable for Hero and Mob)
+    const RPGHeart = ({ selectedHeartIndex, heartIndex, currentHp, totalHp, size = 32 }) => {
+      let fillFraction = 0;
+      if (heartIndex < selectedHeartIndex) {
+        fillFraction = 0;
+      } else if (heartIndex === selectedHeartIndex) {
+        fillFraction = totalHp > 0 ? Math.max(0, Math.min(1, currentHp / totalHp)) : 0;
+      } else {
+        fillFraction = 1;
+      }
+
+      const fillPercentage = Math.round(fillFraction * 100);
+
+      return (
+        <div
+          className="relative inline-block select-none filter drop-shadow-[0_3px_3px_rgba(0,0,0,0.8)]"
+          style={{ width: size, height: size }}
+        >
+          {/* Base Dark Metal Border Frame */}
+          <svg viewBox="0 0 16 16" className="absolute inset-0 w-full h-full text-slate-950" shapeRendering="crispEdges">
+            <path fill="currentColor" d="M3 1h3v1h1v1h2V2h1V1h3v1h1v3h-1v2h-1v2h-1v2h-1v2H7v-2H6v-2H5V7H4V5H3V2h0z" />
+            <path fill="#180a10" d="M3 2h3v1h1v1h2V3h1V2h3v3h-1v2h-1v2h-1v2H8v-2H7V9H6V7H5V5H4V2h-1z" />
+            <path fill="#2e0811" d="M4 3h2v1h1v1h2V4h1V3h2v2h-1v2h-1v2H9v1H8v-1H7V9H6V7H5V5H4V3z" />
+          </svg>
+
+          {/* Dynamic Fill Overlay */}
+          <div
+            className="absolute inset-0 w-full h-full overflow-hidden transition-all duration-200"
+            style={{ clipPath: `inset(${100 - fillPercentage}% 0 0 0)` }}
+          >
+            <svg viewBox="0 0 16 16" className="w-full h-full" shapeRendering="crispEdges">
+              <path fill="#f43f5e" d="M3 2h3v1h1v1h2V3h1V2h3v3h-1v2h-1v2h-1v2H8v-2H7V9H6V7H5V5H4V2h-1z" />
+              <path fill="#be123c" d="M4 5v1h1v2h1v2h1v2h2v-2h1V8h1V6h1V5h-1v2h-1v2H9v1H8v-1H7V9H6V7H5V5H4z" />
+              <path fill="#881337" d="M7 11h2v1H7v-1zM6 9h1v2H6V9zM5 7h1v2H5V7z" />
+              <path fill="#ffe4e6" d="M4 3h1v1H4V3zM4 4h2v1H4V4z" />
+              <path fill="#ffffff" d="M4 3h1v1H4V3z" />
+            </svg>
+          </div>
+
+          {/* Selected Heart Pulse Overlay */}
+          {heartIndex === selectedHeartIndex && (
+            <div className="absolute -inset-0.5 rounded border border-rose-500/80 animate-pulse pointer-events-none" />
+          )}
+        </div>
+      );
+    };
+
+    // RPG Heart Row Component with attached A/B Counter to the right
+    const RPGHeartRow = ({ selectedHeartIndex, currentHp, totalHp, maxHearts = 3, heartSize = 32 }) => {
+      const clampedIndex = Math.max(0, Math.min(maxHearts - 1, selectedHeartIndex));
+      const safeTotalHp = Math.max(1, totalHp);
+      const safeCurrentHp = Math.max(0, Math.min(safeTotalHp, currentHp));
+
+      return (
+        <div className="inline-flex items-center gap-2 bg-slate-950/90 border border-slate-800 p-1.5 rounded-md shadow-lg backdrop-blur-sm select-none">
+          {/* Hearts Row */}
+          <div className="flex items-center gap-1">
+            {Array.from({ length: maxHearts }).map((_, index) => (
+              <RPGHeart
+                key={index}
+                heartIndex={index}
+                selectedHeartIndex={clampedIndex}
+                currentHp={safeCurrentHp}
+                totalHp={safeTotalHp}
+                size={heartSize}
+              />
+            ))}
+          </div>
+
+          {/* A/B Hit Point Counter */}
+          <div className="flex items-center gap-1 px-2 py-0.5 bg-slate-900 border border-slate-700/80 rounded text-xs font-mono font-bold">
+            <span className="text-rose-400">{safeCurrentHp}</span>
+            <span className="text-slate-500">/</span>
+            <span className="text-slate-300">{safeTotalHp}</span>
+          </div>
+        </div>
+      );
+    };
+
+    // Main Stylized Application Container
+    const App = () => {
+      // Game Domain State
+      // Requirement 1: Hero has ONLY 1 Heart (maxHearts = 1, selectedHeartIndex = 0)
+      const [heroHp, setHeroHp] = useState(8);
+      const [heroTotalHp] = useState(12);
+
+      // Requirement 1: Enemy Mob has 3 Hearts (maxHearts = 3)
+      const [mobSelectedHeartIdx, setMobSelectedHeartIdx] = useState(1); // 0-indexed: 2nd heart active
+      const [mobHp, setMobHp] = useState(1);
+      const [mobTotalHp] = useState(2);
+
+      // Math Domain Input State
+      const [inputVal, setInputVal] = useState("2");
+
+      // Keypad Handler
+      const handleKeyPress = (char) => {
+        if (char === 'back') {
+          setInputVal(prev => prev.slice(0, -1));
+        } else if (char === 'clear') {
+          setInputVal("");
+        } else {
+          setInputVal(prev => prev + char);
+        }
+      };
+
+      return (
+        <div className="w-full space-y-4">
+          
+          {/* Top Bar Header */}
+          <div className="flex items-center justify-between rpg-box px-6 py-3 border-slate-700">
+            <div className="flex items-center gap-3">
+              <i className="fa-solid fa-shield-halved text-slate-400 text-2xl"></i>
+              <div>
+                <h1 className="font-pixel text-sm md:text-base text-slate-200 tracking-wider">
+                  MATHCRAFT GAMES
+                </h1>
+                <p className="text-xs text-slate-400">2nd-4th Grade Arithmetic RPG • Gray Neutral Border Reference</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-6">
+              <div className="text-right">
+                <span className="text-xs text-slate-400 block font-pixel">MATH LEVEL</span>
+                <span className="text-xl font-bold text-slate-200 font-mono">LVL 90</span>
+              </div>
+              <button className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded text-slate-300 text-xs font-pixel transition">
+                PAUSE
+              </button>
+            </div>
+          </div>
+
+          {/* MAIN DOMAIN GRID LAYOUT */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+
+            {/* ======================================================== */}
+            {/* DOMAIN 1: GAME DOMAIN (EQUIPMENT & COMBAT STACKED) [6 Cols] */}
+            {/* ======================================================== */}
+            <div className="lg:col-span-6 flex flex-col gap-4">
+
+              {/* STACK ITEM 1: COMBAT STAGE CANVAS */}
+              <div className="rpg-box p-4 flex flex-col gap-3 relative min-h-[300px]">
+                <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span className="font-pixel text-xs text-slate-300">COMBAT STAGE</span>
+                  </div>
+                  <span className="text-xs text-slate-400">Wilderness Encounter</span>
+                </div>
+
+                {/* RPG Combat Stage Canvas */}
+                <div className="relative w-full h-60 bg-slate-950 rounded border border-slate-800 overflow-hidden flex items-end justify-between p-6 bg-[radial-gradient(ellipse_at_bottom,_var(--tw-gradient-stops))] from-slate-900/40 via-slate-950 to-slate-950">
+                  
+                  {/* Grid floor overlay */}
+                  <div className="absolute inset-0 opacity-10 bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:16px_16px]"></div>
+
+                  {/* HERO SPRITE FRAME (1 HEART DISPLAY) */}
+                  <div className="relative z-10 flex flex-col items-center">
+                    {/* HERO HEALTH: 1 Heart with A/B counter next to it */}
+                    <div className="absolute -top-12">
+                      <RPGHeartRow
+                        selectedHeartIndex={0}
+                        currentHp={heroHp}
+                        totalHp={heroTotalHp}
+                        maxHearts={1}
+                        heartSize={28}
+                      />
+                    </div>
+
+                    {/* Hero Sprite Art */}
+                    <div className="w-24 h-24 relative flex items-center justify-center pixel-render filter drop-shadow-[0_4px_6px_rgba(0,0,0,0.9)]">
+                      <svg viewBox="0 0 16 16" className="w-20 h-20">
+                        <path fill="#f59e0b" d="M5 2h6v3H5zM4 5h8v7H4zM5 12h2v3H5zM9 12h2v3H9z" />
+                        <path fill="#d97706" d="M6 3h4v1H6zM5 6h6v5H5z" />
+                        <path fill="#fbbf24" d="M5 2h1v3H5zM10 2h1v3h-1zM4 5h1v7H4z" />
+                        <path fill="#1e293b" d="M6 4h1v1H6zM9 4h1v1H9z" />
+                      </svg>
+                    </div>
+                    <span className="text-[11px] font-pixel text-slate-300 mt-1">HERO</span>
+                  </div>
+
+                  {/* ENEMY ZOMBIE SPRITE FRAME (3 HEARTS DISPLAY) */}
+                  <div className="relative z-10 flex flex-col items-center">
+                    {/* ENEMY HEALTH: 3 Hearts with A/B counter next to rightmost heart */}
+                    <div className="absolute -top-12">
+                      <RPGHeartRow
+                        selectedHeartIndex={mobSelectedHeartIdx}
+                        currentHp={mobHp}
+                        totalHp={mobTotalHp}
+                        maxHearts={3}
+                        heartSize={24}
+                      />
+                    </div>
+
+                    {/* Zombie Sprite Art */}
+                    <div className="w-24 h-24 relative flex items-center justify-center pixel-render filter drop-shadow-[0_4px_6px_rgba(0,0,0,0.9)]">
+                      <svg viewBox="0 0 16 16" className="w-20 h-20">
+                        <path fill="#15803d" d="M5 2h6v3H5z" />
+                        <path fill="#1e40af" d="M4 5h8v4H4z" />
+                        <path fill="#3730a3" d="M5 9h6v6H5z" />
+                        <path fill="#166534" d="M6 3h1v1H6zM9 3h1v1H9z" />
+                        <path fill="#15803d" d="M2 5h3v2H2zM11 5h3v2h-3z" />
+                      </svg>
+                    </div>
+                    <span className="text-[11px] font-pixel text-slate-400 mt-1">ZOMBIE</span>
+                  </div>
+
+                </div>
+
+                {/* HP Adjust Demo Buttons */}
+                <div className="flex items-center justify-between text-xs text-slate-400 bg-slate-950/60 p-2 rounded border border-slate-800">
+                  <span>Demo HP Adjust:</span>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => setHeroHp(prev => Math.max(0, prev - 1))}
+                      className="px-2 py-0.5 bg-slate-900 border border-slate-700 rounded text-rose-400 hover:bg-slate-800"
+                    >
+                      Hero -1 HP
+                    </button>
+                    <button 
+                      onClick={() => setMobHp(prev => Math.max(0, prev - 1))}
+                      className="px-2 py-0.5 bg-slate-900 border border-slate-700 rounded text-amber-400 hover:bg-slate-800"
+                    >
+                      Mob -1 HP
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* STACK ITEM 2: EQUIPMENT & STATS PANEL */}
+              <div className="rpg-box p-4 flex flex-col gap-3">
+                <div className="border-b border-slate-800 pb-2 flex justify-between items-center">
+                  <h2 className="font-pixel text-xs text-slate-300">EQUIPMENT & STATS</h2>
+                  <span className="text-xs text-slate-500">Decorative Progression</span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {/* Equipment Slots */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="rpg-slot p-2 flex flex-col items-center justify-between h-24 relative cursor-pointer">
+                      <span className="text-[10px] font-pixel text-slate-500 uppercase">Weapon</span>
+                      <span className="text-xl text-slate-600 font-pixel">—</span>
+                      <span className="text-[11px] text-slate-500 font-mono">None</span>
+                    </div>
+
+                    <div className="rpg-slot p-2 flex flex-col items-center justify-between h-24 relative cursor-pointer border-slate-600">
+                      <span className="text-[10px] font-pixel text-slate-300 uppercase">Range</span>
+                      <div className="w-8 h-8 pixel-render flex items-center justify-center">
+                        <svg viewBox="0 0 16 16" className="w-8 h-8 drop-shadow">
+                          <path fill="#78350f" d="M2 2h3v2H2zM12 2h2v3h-2zM4 4h8v2H4zM7 6h2v6H7z" />
+                          <path fill="#94a3b8" d="M1 1h2v2H1zM13 1h2v2h-2zM7 2h2v3H7z" />
+                          <path fill="#f59e0b" d="M7 12h2v2H7z" />
+                        </svg>
+                      </div>
+                      <span className="text-[11px] text-slate-200 font-bold font-mono">Crossbow</span>
+                    </div>
+                  </div>
+
+                  {/* Numerical Stats Display */}
+                  <div className="space-y-1.5 bg-slate-950/70 p-3 rounded border border-slate-800 flex flex-col justify-center">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-slate-400 flex items-center gap-1">
+                        <i className="fa-solid fa-burst text-rose-500"></i> Attack
+                      </span>
+                      <span className="text-base font-bold font-mono text-rose-400">4</span>
+                    </div>
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-slate-400 flex items-center gap-1">
+                        <i className="fa-solid fa-shield text-blue-400"></i> Defence
+                      </span>
+                      <span className="text-base font-bold font-mono text-blue-300">11</span>
+                    </div>
+                    <div className="flex justify-between items-center text-xs border-t border-slate-800 pt-1">
+                      <span className="text-slate-400 flex items-center gap-1">
+                        <i className="fa-solid fa-trophy text-amber-400"></i> Hero Level
+                      </span>
+                      <span className="text-lg font-bold font-mono text-slate-200">90</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            {/* ======================================================== */}
+            {/* DOMAIN 2: MATH DOMAIN (WORKSPACE & KEYPAD SIDE-BY-SIDE) [6 Cols] */}
+            {/* ======================================================== */}
+            <div className="lg:col-span-6 rpg-box p-4 flex flex-col gap-4">
+              
+              <div className="border-b border-slate-800 pb-2 flex justify-between items-center">
+                <h2 className="font-pixel text-xs text-slate-300">MATH DOMAIN WORKSPACE</h2>
+                <span className="text-xs text-emerald-400 font-pixel">STEP 1 / 1</span>
+              </div>
+
+              {/* SIDE-BY-SIDE GRID: MATH OPERATION (LEFT) | NUMERIC KEYPAD (RIGHT) */}
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-stretch">
+
+                {/* MATH OPERATION WORKSPACE (Left side of math-domain) */}
+                <div className="md:col-span-6 bg-slate-950 p-4 rounded border border-slate-800 flex flex-col items-center justify-center min-h-[260px] relative shadow-inner">
+                  
+                  <span className="text-xs font-pixel text-slate-400 absolute top-3 left-3">
+                    Addition
+                  </span>
+
+                  {/* Vertical Place Value Addition Display */}
+                  <div className="font-mono text-3xl font-bold tracking-widest text-slate-100 flex flex-col items-end gap-1 my-4">
+                    <div className="px-3 py-1 bg-slate-900 border border-slate-800 rounded">1</div>
+                    <div className="px-3 py-1 bg-slate-900 border border-slate-800 rounded">1</div>
+                    
+                    {/* Operator border line */}
+                    <div className="w-full flex items-center justify-between border-b-2 border-slate-600 pt-1">
+                      <span className="text-slate-400 text-xl font-pixel">+</span>
+                    </div>
+
+                    {/* Student Input Box */}
+                    <div className="mt-2 px-4 py-1.5 bg-slate-900 border-2 border-slate-600 rounded text-slate-200 font-pixel text-2xl min-w-[70px] text-center shadow-[0_0_8px_rgba(255,255,255,0.05)]">
+                      {inputVal || <span className="animate-pulse text-slate-600">_</span>}
+                    </div>
+                  </div>
+
+                  <span className="text-[11px] text-slate-500 text-center font-mono mt-auto">
+                    Enter full step result (e.g. 1 + 1 = 2)
+                  </span>
+                </div>
+
+                {/* FLAT & SQUARE NUMERIC KEYPAD (Right side of math-domain) */}
+                <div className="md:col-span-6 bg-slate-950 p-3 border border-slate-800 flex flex-col justify-between min-h-[260px]">
+                  
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((num) => (
+                      <button
+                        key={num}
+                        onClick={() => handleKeyPress(num)}
+                        className="keypad-btn-flat py-3 font-pixel text-sm flex items-center justify-center"
+                      >
+                        {num}
+                      </button>
+                    ))}
+                    
+                    {/* Clear / Backspace */}
+                    <button
+                      onClick={() => handleKeyPress('back')}
+                      className="keypad-btn-flat py-3 text-rose-400 hover:text-rose-300 flex items-center justify-center"
+                      title="Backspace"
+                    >
+                      <i className="fa-solid fa-backspace text-base"></i>
+                    </button>
+
+                    {/* Zero */}
+                    <button
+                      onClick={() => handleKeyPress('0')}
+                      className="keypad-btn-flat py-3 font-pixel text-sm flex items-center justify-center"
+                    >
+                      0
+                    </button>
+
+                    {/* Clear All */}
+                    <button
+                      onClick={() => handleKeyPress('clear')}
+                      className="keypad-btn-flat py-3 font-pixel text-xs text-slate-400 flex items-center justify-center"
+                      title="Clear"
+                    >
+                      C
+                    </button>
+                  </div>
+
+                  {/* Flat Square Enter Button */}
+                  <button
+                    onClick={() => {
+                      if (inputVal === "2") {
+                        setMobHp(0);
+                      }
+                    }}
+                    className="keypad-btn-enter-flat w-full py-3 mt-2 font-pixel text-xs tracking-wider"
+                  >
+                    ENTER STEP
+                  </button>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+          {/* Footer Note */}
+          <div className="text-center text-xs text-slate-500 font-mono pt-2">
+            Mathcraft Games Subsystem • Gray Neutral Borders Layout Reference
+          </div>
+
+        </div>
+      );
+    };
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

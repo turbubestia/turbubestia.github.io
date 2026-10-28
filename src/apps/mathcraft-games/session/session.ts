@@ -19,6 +19,7 @@ import { generateProblem } from '../math';
 import type { MathEvent, ProblemLifecycle, ProblemLifecycleState } from '../math/lifecycle';
 import { presentProblem } from '../math/lifecycle';
 import { GameRules, type BossHeartState, type GameState } from '../game/rules';
+import type { BossHeartInit, BossStartMessage, BossEndMessage } from '../game/bossTypes';
 import { EQUIPMENT_CATEGORIES, type EquipmentCategory } from '../game/equipment';
 
 export const SESSION_DURATIONS_MINUTES = [2, 5, 10] as const;
@@ -329,6 +330,9 @@ export class SessionCoordinator {
   private totalDamageDealt = 0;
   private bossesDefeated = 0;
   private equipmentEarned = 0;
+
+  /** The last generated problem's operand pair, used for duplicate rejection. */
+  private previousPair: readonly [number, number] | null = null;
 
   // Observation state (framework-independent; consumed by adapters).
   private readonly listeners = new Set<SessionListener>();
@@ -881,8 +885,9 @@ export class SessionCoordinator {
     const start = Math.floor(this.random() * configs.length) % configs.length;
     for (let i = 0; i < configs.length; i += 1) {
       const config = configs[(start + i) % configs.length];
-      const result = generateProblem(config, { random: this.random });
+      const result = generateProblem(config, { previousPair: this.previousPair ?? undefined, random: this.random });
       if (result.ok) {
+        this.previousPair = [result.problem.left, result.problem.right];
         return result.problem;
       }
     }
@@ -932,12 +937,13 @@ export class SessionCoordinator {
   /** Begin a boss fight: queue three problems and emit `boss_start`. */
   private startBoss(): void {
     const lifecycles = this.generateBossProblems().map((problem) => presentProblem(problem));
-    const hearts = lifecycles.map((lifecycle) => ({
+    const hearts: BossHeartInit[] = lifecycles.map((lifecycle) => ({
       problemId: this.nextEncounterId('boss-heart'),
       health: lifecycle.state.correctHitBudget,
     }));
 
-    this.game.applyEvent({ type: 'boss_start', queuedProblems: lifecycles.length, hearts });
+    const bossStart: BossStartMessage = { type: 'boss_start', queuedProblems: lifecycles.length, hearts };
+    this.game.applyEvent(bossStart);
 
     this.activeLifecycle = lifecycles[0] ?? null;
     if (this.activeLifecycle !== null) {
@@ -984,7 +990,8 @@ export class SessionCoordinator {
 
   /** Conclude a boss fight: emit `boss_end`, count the defeat, and continue. */
   private finishBoss(): void {
-    this.game.applyEvent({ type: 'boss_end' });
+    const bossEnd: BossEndMessage = { type: 'boss_end' };
+    this.game.applyEvent(bossEnd);
     this.bossesDefeated += 1;
     const wasSessionEnding = this.bossIsSessionEnding;
     this.bossIsSessionEnding = false;
@@ -1046,9 +1053,6 @@ export class SessionCoordinator {
       case 'solved':
         this.questionsCompleted += 1;
         this.presentDueReward();
-        break;
-      case 'boss_start':
-      case 'boss_end':
         break;
     }
   }
