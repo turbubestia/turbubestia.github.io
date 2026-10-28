@@ -60,6 +60,9 @@ Every new `# Refinement Iteration X` section you write must follow this strict s
 *Note: If no open questions remain, omit this section and append the **LOCKED** tag below.*
 ---
 
+## In-Chat Mode
+When the Feature Workflow runs in in-chat mode (no specification or `plan.request` document is provided, or the user explicitly asks to work directly in chat), present each refinement iteration as a clearly labeled section in the conversation instead of appending to `./.issues/{issue_name}.plan.request.md`. Keep the same structure, append-only history, open-question handling, and the **LOCKED** status transition; only the medium changes from file to chat.
+
 ## State Transition & Completion
 - If there are unresolved questions in "Open Design Choices", the document status is **PENDING USER FEEDBACK**.
 - If all questions are answered, all edge cases are addressed, and the requirement is fully specified, omit the questions section, set the status to **LOCKED**, and append the token `**LOCKED**` to the very end of the file.

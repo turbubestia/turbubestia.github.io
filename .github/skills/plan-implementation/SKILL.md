@@ -40,4 +40,7 @@ At the very beginning of the target file, insert a dedicated block that explicit
 ### 4. Output Format
 - Use Markdown for the output file.
 - Validate that paths, commands, phase exit criteria, and analysis references are consistent with the current repository and the source analysis.
+
+## In-Chat Mode
+When the Feature Workflow runs in in-chat mode (no specification or `plan.request` document is provided, or the user explicitly asks to work directly in chat), present the implementation plan as a clearly labeled section in the conversation instead of writing `./.issues/{issue_name}.prompt.md`. Keep the same phase-based structure, exit criteria, validation commands, and traceability references; only the medium changes from file to chat.
  

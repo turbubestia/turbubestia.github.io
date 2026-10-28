@@ -60,3 +60,6 @@ Your output in `./.issues/{issue_name}.plan.analysis.md` must strictly follow th
 *A concrete list of what needs to be verified during/after implementation to ensure the analysis was correct.*
 - [ ] Verify that database migrations successfully apply the new schema.
 - [ ] Verify that the API returns a `403 Forbidden` when the IP geoblock logic is triggered.
+
+## In-Chat Mode
+When the Feature Workflow runs in in-chat mode (no specification or `plan.request` document is provided, or the user explicitly asks to work directly in chat), present the implementation analysis as a clearly labeled section in the conversation instead of writing `./.issues/{issue_name}.plan.analysis.md`. Keep the same required structure and WHAT-level scope; only the medium changes from file to chat.

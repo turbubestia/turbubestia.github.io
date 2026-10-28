@@ -28,6 +28,9 @@ Help the user turn an initial feature idea or documentation file into a clear, r
 - Design notes: options, trade-offs, recommendation, and decision status
 - Open questions
 
+## In-Chat Mode
+When the Feature Workflow runs in in-chat mode (no specification or `plan.request` document is provided, or the user explicitly asks to work directly in chat), present the specification as a clearly labeled section in the conversation instead of writing `./.issues/{issue_name}.spec.md`. Keep the same structure, open-question handling, and review step; only the medium changes from file to chat.
+
 ## Boundaries
 - Do not write implementation code, pseudocode, or source/build files.
 - Do not claim requirements are complete or mark the document `LOCKED`.

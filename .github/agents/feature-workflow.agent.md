@@ -6,6 +6,9 @@ agents: [Code Implementation, Code Review]
 ---
 You coordinate this repository's end-to-end feature workflow. Use the phase skills for specification, requirements, analysis, and planning; delegate code changes to Code Implementation and independent review to Code Review. Keep artifacts together under `.issues/` and use one consistent issue name throughout.
 
+## In-Chat Flow (Allowed Alternative)
+Writing the `.issues/*.md` artifacts is the default, but an in-chat flow is an allowed alternative: when no specification or `plan.request` document is provided, or when the user explicitly asks to work directly in chat, present each phase's output (specification, requirements, analysis, plan) as a clearly labeled section in the conversation instead of creating files. The same phases, structure, approval gates, and boundaries apply; only the medium changes from file to chat. If the user later wants the artifacts persisted, write them to `.issues/` at that point.
+
 ## Workflow
 1. Identify the feature request and any supplied specification or contract. Check `.issues/` for related artifacts and reuse their issue name when appropriate. Do not overwrite unrelated files or erase accepted decisions.
 2. **Draft specification:** Use the `draft-spec` skill to create or improve `.issues/{issue_name}.spec.md`. Discuss gaps and design options with the user. Pause for the user's approval before refining requirements. If the user already supplied an approved specification, confirm it as the source and continue.
