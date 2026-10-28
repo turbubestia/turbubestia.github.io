@@ -9,7 +9,7 @@ import { EQUIPMENT_CATEGORIES, EQUIPMENT_DISPLAY_CATEGORIES, computeDisplayStats
 import type { GameState } from '../game/rules';
 
 // Game Components
-import { HealthHearts } from './HealthHearts';
+import { RPGHeartRow } from './HealthHearts';
 import { PlaceholderArt } from './PlaceholderArt';
 
 
@@ -142,7 +142,7 @@ function Stat({ label, value }: { label: string; value: number }) {
 function HeroPanel({ hero, equippedArmor }: { hero: GameState['hero']; equippedArmor: EquipmentItem | null }) {
   return (
     <div className="flex flex-col items-center gap-2">
-      <HealthHearts current={hero.health} max={hero.maxHealth} label="Hero health" />
+      <RPGHeartRow selectedHeartIndex={0} currentHp={hero.health} totalHp={hero.maxHealth} maxHearts={1} />
       <PlaceholderArt name="Hero" src={heroAssetUrl(equippedArmor)} alt="Hero" />
     </div>
   );
@@ -156,23 +156,23 @@ function EncounterPanel({ encounter }: { encounter: GameState['encounter'] }) {
   if (encounter.kind === 'regular') {
     return (
       <div className="flex flex-col items-center gap-2">
-        <HealthHearts current={encounter.enemy.health} max={encounter.enemy.maxHealth} label="Enemy health" />
+        <RPGHeartRow selectedHeartIndex={0} currentHp={encounter.enemy.health} totalHp={encounter.enemy.maxHealth} maxHearts={1} />
         <PlaceholderArt name="Enemy" src={regularEnemyAssetUrl(encounter)} alt="Enemy" />
       </div>
     );
   }
 
+  const activeHeart = encounter.hearts[encounter.activeHeartIndex];
   return (
     <div className="flex flex-col items-center gap-2">
       <div className="flex flex-col items-center gap-1">
-        <HealthHearts
-          current={encounter.hearts[encounter.activeHeartIndex]?.health ?? 0}
-          max={encounter.hearts[encounter.activeHeartIndex]?.maxHealth ?? 1}
-          label="Boss heart"
+        <RPGHeartRow
+          selectedHeartIndex={encounter.activeHeartIndex}
+          currentHp={activeHeart?.health ?? 0}
+          totalHp={activeHeart?.maxHealth ?? 1}
+          maxHearts={encounter.hearts.length}
         />
-        <span className="text-xs text-neutral-400">
-          Heart {encounter.activeHeartIndex + 1} of {encounter.hearts.length} · {encounter.queuedProblems} queued
-        </span>
+        <span className="text-xs text-neutral-400">{encounter.queuedProblems} queued</span>
       </div>
       <PlaceholderArt name="Boss" src={bossAssetUrl(encounter)} alt="Boss" />
     </div>

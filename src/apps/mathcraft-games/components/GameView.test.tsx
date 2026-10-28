@@ -23,9 +23,10 @@ describe('GameView (MGP6-03)', () => {
   });
 
   it('renders the hero and a regular enemy with their health', () => {
-    render(<GameView gameState={makeGameState()} onEquip={() => undefined} />);
-    expect(screen.getByRole('img', { name: 'Hero health: 12 of 12' })).not.toBeNull();
-    expect(screen.getByRole('img', { name: 'Enemy health: 3 of 3' })).not.toBeNull();
+    const { container } = render(<GameView gameState={makeGameState()} onEquip={() => undefined} />);
+    // Hero and enemy each render a single-heart row with an A/B counter.
+    const counters = Array.from(container.querySelectorAll('[class*="min-w-[70px]"]'));
+    expect(counters.map((c) => c.textContent)).toEqual(['12/12', '3/3']);
     expect(screen.getByRole('img', { name: 'Hero' }).getAttribute('src')).toContain('289px-Steve_in_leather_armor.png');
   });
 
@@ -43,8 +44,9 @@ describe('GameView (MGP6-03)', () => {
       },
     });
     render(<GameView gameState={state} onEquip={() => undefined} />);
-    expect(screen.getByRole('img', { name: 'Boss heart: 2 of 2' })).not.toBeNull();
-    expect(screen.getByText('Heart 2 of 3 · 2 queued')).not.toBeNull();
+    // The active heart (index 1) drives the A/B counter and the HEART N sublabel.
+    expect(screen.getByText('HEART 2')).not.toBeNull();
+    expect(screen.getByText('2 queued')).not.toBeNull();
   });
 
   it('renders the three equipment slots with a dash when empty', () => {
