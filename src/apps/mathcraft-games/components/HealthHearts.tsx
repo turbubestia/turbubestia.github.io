@@ -158,7 +158,7 @@ export function RPGHeartRow({
       </div>
 
       {/* A/B Hit Point Counter attached to the right of the rightmost heart */}
-      <div className="flex flex-col justify-center min-w-[70px] px-3 py-1 bg-gradient-to-b from-slate-900 to-slate-950 border border-amber-500/30 rounded-lg shadow-inner select-none font-mono">
+      <div className="flex flex-col justify-center min-w-17 px-3 py-1 bg-linear-to-b from-slate-900 to-slate-950 border border-amber-500/30 rounded-lg shadow-inner select-none font-mono">
         <div className="flex items-baseline justify-center gap-0.5 tracking-wider">
           {/* Current Remainder HP (A) */}
           <span className="text-xl font-black text-rose-400 drop-shadow-[0_2px_4px_rgba(225,29,72,0.8)]">
