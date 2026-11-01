@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import type { EquipmentCategory, RewardOffer } from '../game/equipment';
 import { EQUIPMENT_CATEGORIES } from '../game/equipment';
 import { assetForItem, CATEGORY_LABELS } from './equipmentAssets';
@@ -9,11 +10,47 @@ import { assetForItem, CATEGORY_LABELS } from './equipmentAssets';
 interface RewardOverlayProps {
   reward: RewardOffer;
   onEquip: (category: EquipmentCategory) => void;
+  onSkip: () => void;
 }
 
-export function RewardOverlay({ reward, onEquip }: RewardOverlayProps) {
+export function RewardOverlay({ reward, onEquip, onSkip }: RewardOverlayProps) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const dialog = dialogRef.current;
+    dialog?.focus();
+
+    return () => previousFocus?.focus();
+  }, []);
+
+  function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    if (event.key !== 'Tab') {
+      return;
+    }
+
+    const controls = Array.from(dialogRef.current?.querySelectorAll<HTMLButtonElement>('button:not(:disabled)') ?? []);
+    if (controls.length === 0) {
+      event.preventDefault();
+      dialogRef.current?.focus();
+      return;
+    }
+
+    const first = controls[0];
+    const last = controls[controls.length - 1];
+    const activeElement = document.activeElement;
+
+    if (event.shiftKey && (activeElement === first || activeElement === dialogRef.current || !dialogRef.current?.contains(activeElement))) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && (activeElement === last || !dialogRef.current?.contains(activeElement))) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
+
   return (
-    <div role="dialog" aria-modal="true" aria-label="Choose a reward" className="fixed inset-0 z-30 flex items-center justify-center bg-black/70 p-4">
+    <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Choose a reward" tabIndex={-1} onKeyDown={handleKeyDown} className="fixed inset-0 z-30 flex items-center justify-center bg-black/70 p-4">
       <div className="rpg-box flex w-full max-w-md flex-col gap-4 p-6">
         <h2 className="text-center font-pixel text-sm text-rpg-text">Choose a reward</h2>
         <div className="flex flex-col gap-2">
@@ -36,6 +73,13 @@ export function RewardOverlay({ reward, onEquip }: RewardOverlayProps) {
             );
           })}
         </div>
+        <button
+          type="button"
+          onClick={onSkip}
+          className="rpg-slot self-center px-4 py-2 font-pixel text-xs text-rpg-text transition hover:border-rpg-border-light"
+        >
+          Skip reward
+        </button>
       </div>
     </div>
   );

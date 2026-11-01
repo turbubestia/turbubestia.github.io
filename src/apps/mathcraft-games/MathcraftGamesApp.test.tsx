@@ -132,7 +132,9 @@ describe('MathcraftGamesApp active experience', () => {
     });
 
     // The reward modal is shown (in place of the old inline panel).
-    expect(screen.getByRole('dialog', { name: 'Choose a reward' })).not.toBeNull();
+    const rewardDialog = screen.getByRole('dialog', { name: 'Choose a reward' });
+    expect(rewardDialog).not.toBeNull();
+    expect(document.activeElement).toBe(rewardDialog);
 
     // Entry input is blocked while the reward overlay is open.
     const digitButton = screen.getByRole('button', { name: '1' });
@@ -140,9 +142,14 @@ describe('MathcraftGamesApp active experience', () => {
     fireEvent.keyDown(window, { key: '5' });
     expect(screen.queryByText('5', { selector: '[aria-live="polite"]' })).toBeNull();
 
-    // Selecting a reward equips it and closes the overlay.
     const reward = latestResult?.snapshot.gameState.pendingReward;
     expect(reward).not.toBeNull();
+    const loadoutBeforeEnter = latestResult?.snapshot.gameState.loadout;
+    fireEvent.keyDown(rewardDialog, { key: 'Enter' });
+    expect(latestResult?.snapshot.gameState.pendingReward).toEqual(reward);
+    expect(latestResult?.snapshot.gameState.loadout).toEqual(loadoutBeforeEnter);
+
+    // Deliberately selecting a reward still equips it and closes the overlay.
     const category = (['melee', 'range', 'armor'] as const).find((c) => reward?.[c] !== null);
     expect(category).not.toBeNull();
     const chosen = category === undefined ? null : reward?.[category] ?? null;
@@ -151,5 +158,80 @@ describe('MathcraftGamesApp active experience', () => {
     await waitFor(() => {
       expect(screen.queryByRole('dialog', { name: 'Choose a reward' })).toBeNull();
     });
+  });
+
+  it('keeps entry blocked while queued offers are equipped or skipped in sequence', async () => {
+    const timeSource = new ManualTimeSource();
+    let latestResult: UseMathcraftSessionResult | undefined;
+    render(<MathcraftGamesApp sessionOptions={{ timeSource }} onResult={(result) => { latestResult = result; }} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Start session' }));
+
+    act(() => {
+      const session = latestResult?.session;
+      if (session === undefined) {
+        throw new Error('Session did not start');
+      }
+      for (let offerIndex = 0; offerIndex < 3; offerIndex += 1) {
+        timeSource.advance(30_000);
+        session.tick();
+        session.noteKeyInput();
+      }
+      for (let step = 0; step < 10; step += 1) {
+        const lifecycle = session.activeLifecycleState;
+        if (lifecycle?.snapshot.stepIndex === null) {
+          break;
+        }
+        const expected = lifecycle?.snapshot.expected;
+        if (expected === null || expected === undefined) {
+          throw new Error('Active problem has no expected step');
+        }
+        session.submitAnswer(expected);
+      }
+      session.advance();
+    });
+
+    await waitFor(() => {
+      expect(latestResult?.snapshot.gameState.pendingReward).not.toBeNull();
+      expect(latestResult?.session.queuedRewardCount).toBe(2);
+    });
+    const keypadDigit = () => screen.getByRole('button', { name: '1' }) as HTMLButtonElement;
+    expect(keypadDigit().disabled).toBe(true);
+
+    act(() => {
+      timeSource.advance(60_000);
+      latestResult?.session.tick();
+    });
+    expect(latestResult?.snapshot.state.kind).toBe('active');
+    expect(screen.getByRole('dialog', { name: 'Choose a reward' })).not.toBeNull();
+    expect(keypadDigit().disabled).toBe(true);
+
+    const firstOffer = latestResult?.snapshot.gameState.pendingReward;
+    const firstCategory = (['melee', 'range', 'armor'] as const).find((category) => firstOffer?.[category] !== null);
+    const firstItem = firstCategory === undefined ? null : firstOffer?.[firstCategory] ?? null;
+    expect(firstItem).not.toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(firstItem!.name) }));
+
+    await waitFor(() => {
+      expect(latestResult?.session.queuedRewardCount).toBe(1);
+      expect(latestResult?.snapshot.gameState.pendingReward).not.toBeNull();
+    });
+    expect(screen.getByRole('dialog', { name: 'Choose a reward' })).not.toBeNull();
+    expect(keypadDigit().disabled).toBe(true);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Skip reward' }));
+    await waitFor(() => {
+      expect(latestResult?.session.queuedRewardCount).toBe(0);
+      expect(latestResult?.snapshot.gameState.pendingReward).not.toBeNull();
+    });
+    expect(screen.getByRole('dialog', { name: 'Choose a reward' })).not.toBeNull();
+    expect(keypadDigit().disabled).toBe(true);
+
+    act(() => {
+      fireEvent.click(screen.getByRole('button', { name: 'Skip reward' }));
+    });
+    expect(latestResult?.session.gameState.pendingReward).toBeNull();
+    await waitFor(() => expect(latestResult?.snapshot.gameState.pendingReward).toBeNull());
+    expect(screen.queryByRole('dialog', { name: 'Choose a reward' })).toBeNull();
+    expect(keypadDigit().disabled).toBe(false);
   });
 });

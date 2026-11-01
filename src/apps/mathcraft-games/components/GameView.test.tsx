@@ -75,7 +75,7 @@ describe('GameView (MGP6-03)', () => {
   });
 
   it('does not render an inline reward panel when a reward is pending (reward is the modal overlay)', () => {
-    const state = makeGameState({ solvedCount: 5, pendingReward: generateRewardOffer(5) });
+    const state = makeGameState({ solvedCount: 5, pendingReward: generateRewardOffer(300_000, 150_000) });
     render(<GameView gameState={state} />);
     expect(screen.queryByRole('group', { name: 'Choose a reward' })).toBeNull();
     expect(screen.queryByRole('dialog', { name: 'Choose a reward' })).toBeNull();

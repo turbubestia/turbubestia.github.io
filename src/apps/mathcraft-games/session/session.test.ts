@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { ProblemConfig } from '../math';
 import { createSeededRandom } from '../math';
-import { EQUIPMENT_CATEGORIES } from '../game/equipment';
+import { EQUIPMENT_CATEGORIES, generateRewardOffer } from '../game/equipment';
+import type { GeneratedRewardOffer } from '../game/equipment';
 import { createSession, ManualTimeSource, type SessionCoordinator } from './session';
 
 // Single-step problem config: every generated problem has exactly one step, so a
@@ -144,7 +145,7 @@ describe('session: start guard (MGP4-01)', () => {
 
 describe('session: timed rewards', () => {
   it('offers ten selectable rewards across five minutes of reward time', () => {
-    const { session, time } = makeSession({ durationMinutes: 5, enabledConfigs: [addConfig] }, 7);
+    const { session, time } = makeSession({ durationMinutes: 10, enabledConfigs: [addConfig] }, 7);
     session.start();
 
     for (let offerIndex = 0; offerIndex < 10; offerIndex += 1) {
@@ -175,18 +176,110 @@ describe('session: timed rewards', () => {
     expect(session.activeProblem).not.toBeNull();
   });
 
-  it('coalesces multiple expirations during one problem into one offer', () => {
+  it('uses session duration and elapsed active time for category-specific reward tiers', () => {
+    const { session, time } = makeSession({ durationMinutes: 2, enabledConfigs: [addConfig] }, 7);
+    session.start();
+    pump(time, session, 60_000, 30_000);
+    solveCurrent(session);
+
+    expect(session.skipReward()).toBe(true);
+    expect(session.gameState.pendingReward).toMatchObject({
+      melee: { tier: 3 },
+      range: { tier: 2 },
+      armor: { tier: 4 },
+    });
+  });
+
+  it('keeps each interval as a separate offer and allows skipping to the next', () => {
     const { session, time } = makeSession({ durationMinutes: 10, enabledConfigs: [multiAddConfig] }, 7);
     session.start();
     pump(time, session, 90_000, 30_000);
 
+    expect(session.gameState.pendingReward).toBeNull();
+    expect(session.queuedRewardCount).toBe(3);
     solveCurrent(session);
     expect(session.gameState.pendingReward).not.toBeNull();
+    expect(session.queuedRewardCount).toBe(2);
 
-    const category = EQUIPMENT_CATEGORIES.find((entry) => session.gameState.pendingReward?.[entry] !== null);
-    expect(category).toBeDefined();
-    expect(session.equip(category!)).toBe(true);
+    const loadout = session.gameState.loadout;
+    expect(session.skipReward()).toBe(true);
+    expect(session.gameState.pendingReward).not.toBeNull();
+    expect(session.queuedRewardCount).toBe(1);
+    expect(session.gameState.loadout).toEqual(loadout);
+    expect(session.getSummary().equipmentEarned).toBe(0);
+
+    expect(session.skipReward()).toBe(true);
+    expect(session.queuedRewardCount).toBe(0);
+    expect(session.gameState.pendingReward).not.toBeNull();
+    expect(session.skipReward()).toBe(true);
     expect(session.gameState.pendingReward).toBeNull();
+  });
+
+  it('pauses reward time while an offer is pending during solved review', () => {
+    const { session, time } = makeSession({ durationMinutes: 10, enabledConfigs: [addConfig] }, 1);
+    session.start();
+    solveCurrent(session);
+    expect(session.awaitingAdvance).toBe(true);
+
+    pump(time, session, 30_000, 30_000);
+    expect(session.gameState.pendingReward).not.toBeNull();
+    expect(session.queuedRewardCount).toBe(0);
+    pump(time, session, 30_000, 30_000);
+    expect(session.queuedRewardCount).toBe(0);
+    expect(session.gameState.pendingReward).not.toBeNull();
+
+    expect(session.skipReward()).toBe(true);
+    step(time, session, 29_999);
+    expect(session.gameState.pendingReward).toBeNull();
+    step(time, session, 1);
+    expect(session.gameState.pendingReward).not.toBeNull();
+  });
+
+  it.each(['equip', 'skip'] as const)('keeps a pending offer active past idle limit and resets idle time after %s', (resolution) => {
+    const { session, time } = makeSession({ durationMinutes: 10, enabledConfigs: [addConfig] }, 1);
+    session.start();
+    solveCurrent(session);
+    step(time, session, 30_000);
+    expect(session.gameState.pendingReward).not.toBeNull();
+
+    step(time, session, 30_000);
+    expect(session.currentState.kind).toBe('active');
+    expect(session.gameState.pendingReward).not.toBeNull();
+
+    if (resolution === 'equip') {
+      const category = EQUIPMENT_CATEGORIES.find((entry) => session.gameState.pendingReward?.[entry] !== null);
+      expect(category).toBeDefined();
+      expect(session.equip(category!)).toBe(true);
+    } else {
+      expect(session.skipReward()).toBe(true);
+    }
+
+    expect(session.currentState.kind).toBe('active');
+    session.advance();
+    step(time, session, 59_999);
+    expect(session.currentState.kind).toBe('active');
+    step(time, session, 1);
+    expect(session.currentState.kind).toBe('idle-paused');
+  });
+
+  it('preserves the interval remainder until the current and queued offers are resolved', () => {
+    const { session, time } = makeSession({ durationMinutes: 10, enabledConfigs: [addConfig] }, 1);
+    session.start();
+    pump(time, session, 110_000, 30_000);
+    expect(session.queuedRewardCount).toBe(3);
+
+    solveCurrent(session);
+    expect(session.gameState.pendingReward).not.toBeNull();
+    expect(session.queuedRewardCount).toBe(2);
+    session.skipReward();
+    session.skipReward();
+    session.skipReward();
+    expect(session.gameState.pendingReward).toBeNull();
+
+    step(time, session, 9_999);
+    expect(session.gameState.pendingReward).toBeNull();
+    step(time, session, 1);
+    expect(session.gameState.pendingReward).not.toBeNull();
   });
 
   it('offers a reward immediately when an interval expires during solved review', () => {
@@ -199,6 +292,25 @@ describe('session: timed rewards', () => {
     step(time, session, 30_000);
 
     expect(session.gameState.pendingReward).not.toBeNull();
+  });
+
+  it('uses elapsed active time at the interval when a reward expires during solved review', () => {
+    const { session, time } = makeSession({ durationMinutes: 2, enabledConfigs: [addConfig] }, 1);
+    session.start();
+    step(time, session, 30_000);
+    solveCurrent(session);
+    expect(session.gameState.pendingReward).not.toBeNull();
+    expect(session.equip('melee')).toBe(true);
+    session.advance();
+
+    solveCurrent(session);
+    expect(session.awaitingAdvance).toBe(true);
+    step(time, session, 30_000);
+
+    expect(session.gameState.pendingReward).toMatchObject({
+      melee: { tier: 3 },
+      armor: { tier: 4 },
+    });
   });
 
   it('pauses reward time during manual pauses', () => {
@@ -229,12 +341,24 @@ describe('session: timed rewards', () => {
     const category = EQUIPMENT_CATEGORIES.find((entry) => session.gameState.pendingReward?.[entry] !== null);
     expect(category).toBeDefined();
     session.equip(category!);
+    expect(session.gameState.pendingReward).not.toBeNull();
+    session.skipReward();
     session.advance();
 
     step(time, session, 15_000);
     solveCurrent(session);
 
     expect(session.gameState.pendingReward).toBeNull();
+  });
+
+  it('does not accrue rewards beyond the idle boundary after a delayed clock sync', () => {
+    const { session, time } = makeSession({ durationMinutes: 10, enabledConfigs: [multiAddConfig] }, 1);
+    session.start();
+
+    step(time, session, 90_000);
+
+    expect(session.currentState.kind).toBe('idle-paused');
+    expect(session.queuedRewardCount).toBe(2);
   });
 
   it('continues reward time during a boss fight', () => {
@@ -253,6 +377,125 @@ describe('session: timed rewards', () => {
     expect(session.gameState.pendingReward).not.toBeNull();
     expect(session.equip('melee')).toBe(true);
     expect(session.getSummary().equipmentEarned).toBe(2);
+  });
+
+  it('progresses reward tiers during boss fights independently of active session time', () => {
+    const { session, time } = makeSession({ durationMinutes: 10, enabledConfigs: [addConfig] }, 5);
+    session.start();
+    pump(time, session, 300_000);
+    solveCurrent(session);
+
+    expect(session.queuedRewardCount).toBe(9);
+    for (let offerIndex = 0; offerIndex < 10; offerIndex += 1) {
+      expect(session.skipReward()).toBe(true);
+    }
+    session.advance();
+    expect(session.currentState.kind).toBe('boss-fight');
+    const remainingBeforeBossTime = session.remainingTimeMs;
+
+    step(time, session, 30_000);
+    session.noteKeyInput();
+    step(time, session, 30_000);
+    session.noteKeyInput();
+    step(time, session, 30_000);
+    expect(session.remainingTimeMs).toBe(remainingBeforeBossTime);
+    solveCurrent(session);
+
+    expect(session.queuedRewardCount).toBe(2);
+    session.skipReward();
+    session.skipReward();
+    const laterBossOffer: GeneratedRewardOffer | null = session.gameState.pendingReward;
+    if (laterBossOffer === null) {
+      throw new Error('Expected the later boss reward offer');
+    }
+    const rewardProgressOffer = generateRewardOffer(600_000, 390_000, () => 0);
+    const activeTimeOffer = generateRewardOffer(600_000, 300_000, () => 0);
+    expect(laterBossOffer).toMatchObject({
+      melee: { tier: rewardProgressOffer.melee.tier },
+      range: { tier: rewardProgressOffer.range.tier },
+      armor: { tier: rewardProgressOffer.armor.tier },
+    });
+    expect(laterBossOffer.armor.tier).toBeGreaterThan(activeTimeOffer.armor.tier);
+  });
+
+  it('continues reward cadence during a defeat decision', () => {
+    const { session, time } = makeSession({ durationMinutes: 10, enabledConfigs: [addConfig] }, 6);
+    session.start();
+    step(time, session, 20_000);
+    defeatHero(session);
+    expect(session.currentState.kind).toBe('defeat');
+
+    step(time, session, 30_000);
+    expect(session.queuedRewardCount).toBe(1);
+    session.respawn();
+    solveCurrent(session);
+    expect(session.gameState.pendingReward).not.toBeNull();
+  });
+
+  it('retains pending and queued offers across expiration until the ending boss concludes', () => {
+    const { session, time } = makeSession({ durationMinutes: 2, enabledConfigs: [multiAddConfig] }, 3);
+    session.start();
+    pump(time, session, 90_000, 30_000);
+    solveCurrent(session);
+    expect(session.gameState.pendingReward).not.toBeNull();
+    expect(session.queuedRewardCount).toBe(2);
+
+    pump(time, session, 30_000, 30_000);
+    expect(session.isExpired).toBe(true);
+    expect(session.gameState.pendingReward).not.toBeNull();
+    expect(session.queuedRewardCount).toBe(2);
+
+    session.advance();
+    expect(session.currentState.kind).toBe('boss-fight');
+    expect(session.gameState.pendingReward).not.toBeNull();
+    expect(session.queuedRewardCount).toBe(2);
+
+    solveBoss(session);
+    expect(session.currentState.kind).toBe('summary');
+    expect(session.gameState.pendingReward).toBeNull();
+    expect(session.queuedRewardCount).toBe(0);
+  });
+
+  it('generates and presents timed offers during the session-ending boss after expiration', () => {
+    const { session, time } = makeSession({ durationMinutes: 2, enabledConfigs: [addConfig] }, 3);
+    session.start();
+    pump(time, session, 120_000, 30_000);
+    expect(session.isExpired).toBe(true);
+    solveActive(session);
+    expect(session.currentState.kind).toBe('boss-fight');
+
+    while (session.gameState.pendingReward !== null || session.queuedRewardCount > 0) {
+      expect(session.skipReward()).toBe(true);
+    }
+
+    step(time, session, 30_000);
+    expect(session.queuedRewardCount).toBe(1);
+    solveCurrent(session);
+    expect(session.gameState.pendingReward).not.toBeNull();
+    expect(session.queuedRewardCount).toBe(0);
+  });
+
+  it('caps ending-boss offer tiers after cumulative reward time reaches the session duration', () => {
+    const { session, time } = makeSession({ durationMinutes: 2, enabledConfigs: [addConfig] }, 3);
+    session.start();
+    pump(time, session, 120_000, 30_000);
+    solveActive(session);
+    expect(session.currentState.kind).toBe('boss-fight');
+
+    while (session.gameState.pendingReward !== null || session.queuedRewardCount > 0) {
+      expect(session.skipReward()).toBe(true);
+    }
+
+    step(time, session, 30_000);
+    solveCurrent(session);
+    const endingBossOffer = session.gameState.pendingReward;
+    expect(endingBossOffer).not.toBeNull();
+    const cappedTiers = generateRewardOffer(120_000, 120_000, () => 0);
+    expect(endingBossOffer).toMatchObject({
+      melee: { tier: cappedTiers.melee.tier },
+      range: { tier: cappedTiers.range.tier },
+      armor: { tier: cappedTiers.armor.tier },
+    });
   });
 });
 
@@ -923,6 +1166,9 @@ describe('session: idle-pause resumeTarget (REQ-9)', () => {
     pump(time, session, 300_000); // boss becomes pending
     solveActive(session); // start boss fight
     expect(session.currentState.kind).toBe('boss-fight');
+    while (session.gameState.pendingReward !== null) {
+      session.skipReward();
+    }
 
     // Simulate idle pause during boss fight
     step(time, session, 60_000);

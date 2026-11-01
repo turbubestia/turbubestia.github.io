@@ -27,31 +27,36 @@ describe('equipment: categories', () => {
 });
 
 describe('equipment: reward selection', () => {
-  it('uses the first item tier for early timed rewards', () => {
-    expect(selectRewardItem('melee', 2)?.tier).toBe(1);
-    expect(selectRewardItem('range', 0)?.tier).toBe(1);
-    expect(selectRewardItem('armor', 0)?.tier).toBe(1);
+  it('uses the lowest available item tier before the first tier boundary', () => {
+    const durationMs = 5 * 60_000;
+    expect(selectRewardItem('melee', durationMs, 0).tier).toBe(1);
+    expect(selectRewardItem('range', durationMs, 0).tier).toBe(1);
+    expect(selectRewardItem('armor', durationMs, 0).tier).toBe(1);
   });
 
-  it('selects a random item from the matching tier bucket', () => {
-    const tierOneWeapon = selectRewardItem('melee', 3, () => 0);
-    expect(tierOneWeapon?.tier).toBe(1);
-    expect(tierOneWeapon?.category).toBe('melee');
+  it('selects a random item from the reached tier bucket', () => {
+    const durationMs = 5 * 60_000;
+    const firstTierTwoWeapon = selectRewardItem('melee', durationMs, 90_000, () => 0);
+    const lastTierTwoWeapon = selectRewardItem('melee', durationMs, 90_000, () => 0.99);
+    expect(firstTierTwoWeapon.tier).toBe(2);
+    expect(firstTierTwoWeapon.category).toBe('melee');
+    expect(lastTierTwoWeapon.tier).toBe(2);
+    expect(lastTierTwoWeapon.id).not.toBe(firstTierTwoWeapon.id);
 
-    const tierTwoRange = selectRewardItem('range', 6, () => 0.99);
-    expect(tierTwoRange?.tier).toBe(2);
-    expect(tierTwoRange?.category).toBe('range');
+    const tierTwoRange = selectRewardItem('range', 120_000, 60_000, () => 0.99);
+    expect(tierTwoRange.tier).toBe(2);
+    expect(tierTwoRange.category).toBe('range');
 
-    const tierOneArmor = selectRewardItem('armor', 3, () => 0);
-    expect(tierOneArmor?.tier).toBe(1);
-    expect(tierOneArmor?.category).toBe('armor');
+    const tierOneArmor = selectRewardItem('armor', durationMs, 0, () => 0);
+    expect(tierOneArmor.tier).toBe(1);
+    expect(tierOneArmor.category).toBe('armor');
   });
 
-  it('offers one candidate per category from the current tier bucket', () => {
-    const offer = generateRewardOffer(3, () => 0);
-    expect(offer['melee']?.tier).toBe(1);
-    expect(offer['range']?.tier).toBe(1);
-    expect(offer['armor']?.tier).toBe(1);
+  it('offers a valid item per category using each category maximum tier', () => {
+    const offer = generateRewardOffer(120_000, 60_000, () => 0);
+    expect(offer.melee).toMatchObject({ category: 'melee', tier: 3 });
+    expect(offer.range).toMatchObject({ category: 'range', tier: 2 });
+    expect(offer.armor).toMatchObject({ category: 'armor', tier: 4 });
   });
 });
 

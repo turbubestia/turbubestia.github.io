@@ -8,7 +8,7 @@ import {
   type EquipmentCategory,
   type EquipmentItem,
   type EquipmentLoadout,
-  type RewardOffer,
+  type GeneratedRewardOffer,
 } from './equipment';
 
 // Game-domain rule engine.
@@ -50,7 +50,7 @@ export interface GameState {
   hero: HeroState;
   encounter: EncounterState;
   solvedCount: number;
-  pendingReward: RewardOffer | null;
+  pendingReward: GeneratedRewardOffer | null;
   loadout: EquipmentLoadout;
 }
 
@@ -65,7 +65,7 @@ export class GameRules {
   private hero: HeroState = initialHero();
   private encounter: EncounterState = { kind: 'none' };
   private solvedCount = 0;
-  private pendingReward: RewardOffer | null = null;
+  private pendingReward: GeneratedRewardOffer | null = null;
   private loadout: EquipmentLoadout = { ...EMPTY_LOADOUT };
 
   get state(): GameState {
@@ -141,9 +141,28 @@ export class GameRules {
     return offer;
   }
 
-  /** Create a timed reward offer using the current solved-count tier. */
-  offerReward(): void {
-    this.pendingReward = generateRewardOffer(this.solvedCount);
+  /** Create a timed reward offer using the configured duration and elapsed session time. */
+  offerReward(durationMs: number, elapsedMs: number): void {
+    this.presentReward(this.createRewardOffer(durationMs, elapsedMs));
+  }
+
+  /** Generate an offer for a specific session elapsed-time checkpoint. */
+  createRewardOffer(durationMs: number, elapsedMs: number): GeneratedRewardOffer {
+    return generateRewardOffer(durationMs, elapsedMs);
+  }
+
+  /** Make a previously generated timed offer the active offer. */
+  presentReward(offer: GeneratedRewardOffer): void {
+    this.pendingReward = { ...offer };
+  }
+
+  /** Consume the active offer without changing the loadout. */
+  skipReward(): boolean {
+    if (this.pendingReward === null) {
+      return false;
+    }
+    this.pendingReward = null;
+    return true;
   }
 
   /** Advance the active encounter after the solved problem is explicitly continued. */

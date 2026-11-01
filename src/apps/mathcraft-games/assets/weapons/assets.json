@@ -13,7 +13,6 @@
   { "name": "Iron Axe", "filename": "Iron_Axe_JE5_BE2.png", "type": "melee", "tier": 4, "value": 9 },
   { "name": "Iron Sword", "filename": "Iron_Sword_JE2_BE2.png", "type": "melee", "tier": 4, "value": 6 },
   { "name": "Mace", "filename": "Mace_JE1_BE1.png", "type": "melee", "tier": 6, "value": 6 },
-  { "name": "Netherite Helmet", "filename": "Netherite_Helmet_JE2_BE1.png", "type": "armor", "tier": 7, "value": 3 },
   { "name": "Stone Axe", "filename": "Stone_Axe_JE2_BE2.png", "type": "melee", "tier": 2, "value": 9 },
   { "name": "Trident", "filename": "Trident_(item)_JE2_BE1.png", "type": "range", "tier": 5, "value": 9 },
   { "name": "Wooden Axe", "filename": "Wooden_Axe_JE2_BE2.png", "type": "melee", "tier": 1, "value": 7 }

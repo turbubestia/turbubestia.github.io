@@ -20,8 +20,19 @@ export const CATEGORY_LABELS: Record<EquipmentCategory, string> = {
 };
 
 function assetUrl(folder: 'weapons' | 'armor-sets' | 'mobs' | 'boss', filename: string): string {
-  return new URL(`../assets/${folder}/${filename}`, import.meta.url).href;
+  const assetPath = `../assets/${folder}/${filename}`;
+  return ASSET_URLS[assetPath] ?? ASSET_URLS_BY_FILENAME.get(filename) ?? '';
 }
+
+const ASSET_URLS = import.meta.glob('../assets/{armor-sets,boss,mobs,weapons}/*.png', {
+  eager: true,
+  import: 'default',
+  query: '?url',
+}) as Record<string, string>;
+
+const ASSET_URLS_BY_FILENAME = new Map(
+  Object.entries(ASSET_URLS).map(([path, url]) => [path.slice(path.lastIndexOf('/') + 1), url]),
+);
 
 export function assetForItem(item: EquipmentItem | null): string | null {
   if (item === null) {

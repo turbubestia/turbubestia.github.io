@@ -50,6 +50,7 @@ function ActiveExperience({ setup, sessionOptions, onResult, }: {
     resume,
     respawn,
     equip,
+    skipReward,
     endSession,
     noteKeyInput,
     markCombatPresentationComplete,
@@ -63,6 +64,7 @@ function ActiveExperience({ setup, sessionOptions, onResult, }: {
   const entryRef = useRef<AnswerEntryHandle>(null);
   
   const [isEndSessionConfirmOpen, setIsEndSessionConfirmOpen] = useState(false);
+  const rewardPending = snapshot.gameState.pendingReward !== null;
 
   // Whether the answer entry currently accepts input (false during the
   // wrong-answer feedback interval or when externally disabled).
@@ -79,7 +81,7 @@ function ActiveExperience({ setup, sessionOptions, onResult, }: {
   // (wrong-answer interval, paused, or no active problem).
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (!accepting || isEndSessionConfirmOpen) {
+      if (!accepting || isEndSessionConfirmOpen || rewardPending) {
         return;
       }
       if (/^[0-9]$/.test(event.key)) {
@@ -95,7 +97,7 @@ function ActiveExperience({ setup, sessionOptions, onResult, }: {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [accepting, isEndSessionConfirmOpen, noteKeyInput]);
+  }, [accepting, isEndSessionConfirmOpen, noteKeyInput, rewardPending]);
 
   // Signal the coordinator once the active problem's combat outcome has been
   // shown (i.e. the lifecycle transitions to solved), which enables Next.
@@ -122,7 +124,6 @@ function ActiveExperience({ setup, sessionOptions, onResult, }: {
   const inPlay = state.kind === 'active' || state.kind === 'boss-fight';
   const { gameState } = snapshot;
   const stats = computeDisplayStats(gameState.loadout, gameState.solvedCount);
-  const rewardPending = gameState.pendingReward !== null;
 
   const gameView = (
     <GameView
@@ -190,7 +191,7 @@ function ActiveExperience({ setup, sessionOptions, onResult, }: {
         )}
 
         {inPlay && gameState.pendingReward !== null && (
-          <RewardOverlay reward={gameState.pendingReward} onEquip={equip} />
+          <RewardOverlay reward={gameState.pendingReward} onEquip={equip} onSkip={skipReward} />
         )}
 
         {state.kind === 'manual-paused' && (

@@ -28,6 +28,7 @@ export interface UseMathcraftSessionResult {
   resume: () => void;
   respawn: () => void;
   equip: (category: EquipmentCategory) => boolean;
+  skipReward: () => boolean;
   endSession: () => void;
   noteKeyInput: () => void;
   /**
@@ -78,6 +79,7 @@ export function useMathcraftSession(setup: SessionSetup, options: SessionOptions
   const resume = useCallback(() => session.resume(), [session]);
   const respawn = useCallback(() => session.respawn(), [session]);
   const equip = useCallback((category: EquipmentCategory) => session.equip(category), [session]);
+  const skipReward = useCallback(() => session.skipReward(), [session]);
   const endSession = useCallback(() => session.endSession(), [session]);
   const noteKeyInput = useCallback(() => session.noteKeyInput(), [session]);
   const markCombatPresentationComplete = useCallback(() => session.markCombatPresentationComplete(), [session]);
@@ -92,6 +94,7 @@ export function useMathcraftSession(setup: SessionSetup, options: SessionOptions
     resume,
     respawn,
     equip,
+    skipReward,
     endSession,
     noteKeyInput,
     markCombatPresentationComplete,

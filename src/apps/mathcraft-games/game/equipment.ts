@@ -8,8 +8,6 @@ import armorManifest from '../assets/armor-sets/assets.json';
 import weaponsManifest from '../assets/weapons/assets.json';
 export type EquipmentCategory = 'melee' | 'range' | 'armor';
 
-export const REWARD_TIER_SOLVE_INTERVAL = 3;
-
 // This list all the equipment categories that are eligible for display in the reward offer panel.
 export const EQUIPMENT_CATEGORIES: readonly EquipmentCategory[] = ['melee', 'range', 'armor'];
 
@@ -30,7 +28,7 @@ export interface EquipmentItem {
   category: EquipmentCategory;
   name: string;
   filename: string;
-  /** Solved-problem count at which this item becomes eligible (tier). */
+  /** Reward progression tier. */
   tier: number;
   /** Displayed stat value (Atk for weapons/bow, Def for armor). Decorative. */
   power: number;
@@ -84,51 +82,57 @@ const manifestCatalog = [
   }),
 ];
 
-const legacyCompatibilityCatalog: readonly EquipmentItem[] = [
-  { id: 'wooden-sword', category: 'melee', name: 'Wooden Sword', filename: 'Wooden_Axe_JE2_BE2.png', tier: 1, power: 3, source: 'legacy' },
-  { id: 'iron-sword', category: 'melee', name: 'Iron Sword', filename: 'Iron_Sword_JE2_BE2.png', tier: 2, power: 7, source: 'legacy' },
-  { id: 'diamond-sword', category: 'melee', name: 'Diamond Sword', filename: 'Diamond_Sword_JE3_BE3.png', tier: 3, power: 12, source: 'legacy' },
-  { id: 'wooden-bow', category: 'range', name: 'Wooden Bow', filename: 'Bow_JE2_BE1.png', tier: 1, power: 3, source: 'legacy' },
-  { id: 'crossbow', category: 'range', name: 'Crossbow', filename: 'Crossbow.png', tier: 2, power: 7, source: 'legacy' },
-  { id: 'enchanted-bow', category: 'range', name: 'Enchanted Bow', filename: 'Trident_(item)_JE2_BE1.png', tier: 3, power: 12, source: 'legacy' },
-];
-
-export const EQUIPMENT_CATALOG: readonly EquipmentItem[] = [...manifestCatalog, ...legacyCompatibilityCatalog];
-
-function rewardTierFromSolvedCount(solvedCount: number): number {
-  return Math.max(1, Math.floor(solvedCount / REWARD_TIER_SOLVE_INTERVAL));
-}
+export const EQUIPMENT_CATALOG: readonly EquipmentItem[] = [...manifestCatalog];
 
 /**
- * Select a random item from the category's current tier bucket.
- * Timed rewards use the first tier until solved-count progression advances it.
+ * Select a random item from the highest available tier reached by elapsed time.
  */
 export function selectRewardItem(
   category: EquipmentCategory,
-  solvedCount: number,
+  durationMs: number,
+  elapsedMs: number,
   randomFn: () => number = Math.random,
-): EquipmentItem | null {
-  const tier = rewardTierFromSolvedCount(solvedCount);
-  const candidates = EQUIPMENT_CATALOG.filter(
-    (item) => item.source !== 'legacy' && item.category === category && item.tier === tier,
+): EquipmentItem {
+  const categoryItems = EQUIPMENT_CATALOG.filter(
+    (item) => item.source !== 'legacy' && item.category === category,
   );
-  if (candidates.length === 0) {
-    return null;
+  if (categoryItems.length === 0) {
+    throw new Error(`No equipment available for category "${category}".`);
   }
 
-  const index = Math.floor(randomFn() * candidates.length);
-  return candidates[index] ?? null;
+  const tiers = [...new Set(categoryItems.map((item) => item.tier))].sort((a, b) => a - b);
+  const maxTier = tiers[tiers.length - 1];
+  const minTier = tiers[0];
+  if (maxTier === undefined || minTier === undefined) {
+    throw new Error(`No equipment tiers available for category "${category}".`);
+  }
+
+  const elapsedFraction = Math.min(1, Math.max(0, elapsedMs / durationMs));
+  const calculatedTier = Math.min(maxTier, Math.ceil(maxTier * elapsedFraction));
+  const tier = [...tiers].reverse().find((availableTier) => availableTier <= calculatedTier) ?? minTier;
+  const candidates = categoryItems.filter((item) => item.tier === tier);
+  const index = Math.max(0, Math.min(candidates.length - 1, Math.floor(randomFn() * candidates.length)));
+  const selected = candidates[index];
+  if (selected === undefined) {
+    throw new Error(`No equipment available at tier ${tier} for category "${category}".`);
+  }
+  return selected;
 }
 
 /** One candidate item per equipment category. */
 export type RewardOffer = Record<EquipmentCategory, EquipmentItem | null>;
+export type GeneratedRewardOffer = Record<EquipmentCategory, EquipmentItem>;
 
-/** Build the reward offer (one candidate per category) for a solved-problem count. */
-export function generateRewardOffer(solvedCount: number, randomFn: () => number = Math.random): RewardOffer {
+/** Build the reward offer (one candidate per category) for elapsed session time. */
+export function generateRewardOffer(
+  durationMs: number,
+  elapsedMs: number,
+  randomFn: () => number = Math.random,
+): GeneratedRewardOffer {
   return {
-    melee: selectRewardItem('melee', solvedCount, randomFn),
-    range: selectRewardItem('range', solvedCount, randomFn),
-    armor: selectRewardItem('armor', solvedCount, randomFn),
+    melee: selectRewardItem('melee', durationMs, elapsedMs, randomFn),
+    range: selectRewardItem('range', durationMs, elapsedMs, randomFn),
+    armor: selectRewardItem('armor', durationMs, elapsedMs, randomFn),
   };
 }
 

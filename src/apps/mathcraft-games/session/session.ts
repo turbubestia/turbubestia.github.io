@@ -20,7 +20,7 @@ import type { MathEvent, ProblemLifecycle, ProblemLifecycleState } from '../math
 import { presentProblem } from '../math/lifecycle';
 import { GameRules, type BossHeartState, type GameState } from '../game/rules';
 import type { BossHeartInit, BossStartMessage, BossEndMessage } from '../game/bossTypes';
-import { EQUIPMENT_CATEGORIES, type EquipmentCategory } from '../game/equipment';
+import { EQUIPMENT_CATEGORIES, type EquipmentCategory, type GeneratedRewardOffer } from '../game/equipment';
 
 export const SESSION_DURATIONS_MINUTES = [2, 5, 10] as const;
 export type SessionDurationMinutes = (typeof SESSION_DURATIONS_MINUTES)[number];
@@ -136,6 +136,7 @@ export interface SessionOptions {
 export interface SessionSnapshot {
   state: SessionState;
   gameState: GameState;
+  queuedRewardCount: number;
   activeProblem: GeneratedProblem | null;
   activeLifecycleState: ProblemLifecycleState | null;
   remainingBossQueue: readonly GeneratedProblem[];
@@ -207,6 +208,7 @@ interface EmittedValues {
   totalDamageDealt: number;
   bossesDefeated: number;
   equipmentEarned: number;
+  queuedRewardCount: number;
 }
 
 function sameGame(a: GameFingerprint, b: GameFingerprint): boolean {
@@ -223,16 +225,19 @@ function sameGame(a: GameFingerprint, b: GameFingerprint): boolean {
     return false;
   }
   if (a.bossHearts === null || b.bossHearts === null) {
-    return a.bossHearts === b.bossHearts;
-  }
-  if (a.bossHearts.length !== b.bossHearts.length) {
-    return false;
-  }
-  for (let i = 0; i < a.bossHearts.length; i += 1) {
-    const left = a.bossHearts[i];
-    const right = b.bossHearts[i];
-    if (left.problemId !== right.problemId || left.health !== right.health || left.maxHealth !== right.maxHealth) {
+    if (a.bossHearts !== b.bossHearts) {
       return false;
+    }
+  } else {
+    if (a.bossHearts.length !== b.bossHearts.length) {
+      return false;
+    }
+    for (let i = 0; i < a.bossHearts.length; i += 1) {
+      const left = a.bossHearts[i];
+      const right = b.bossHearts[i];
+      if (left.problemId !== right.problemId || left.health !== right.health || left.maxHealth !== right.maxHealth) {
+        return false;
+      }
     }
   }
   return sameIds(a.rewardIds, b.rewardIds) && sameIds(a.loadoutIds, b.loadoutIds);
@@ -281,7 +286,8 @@ function sameValues(a: EmittedValues, b: EmittedValues): boolean {
     a.acceptedSteps === b.acceptedSteps &&
     a.totalDamageDealt === b.totalDamageDealt &&
     a.bossesDefeated === b.bossesDefeated &&
-    a.equipmentEarned === b.equipmentEarned
+    a.equipmentEarned === b.equipmentEarned &&
+    a.queuedRewardCount === b.queuedRewardCount
   );
 }
 
@@ -301,8 +307,9 @@ export class SessionCoordinator {
 
   // Time clocks owned by the coordinator.
   private activeTimeMs = 0;
-  private rewardElapsedMs = 0;
-  private rewardPending = false;
+  private rewardTimeMs = 0;
+  private rewardIntervalRemainderMs = 0;
+  private rewardQueue: GeneratedRewardOffer[] = [];
   private idleMs = 0;
   private nextCheckpointMs = BOSS_CHECKPOINT_MS;
 
@@ -364,6 +371,11 @@ export class SessionCoordinator {
   /** A snapshot of the game domain state (hero, encounter, rewards, loadout). */
   get gameState() {
     return this.game.state;
+  }
+
+  /** Number of timed reward offers waiting behind the active offer. */
+  get queuedRewardCount(): number {
+    return this.rewardQueue.length;
   }
 
   /** The problem currently being worked, if any. */
@@ -511,6 +523,7 @@ export class SessionCoordinator {
       totalDamageDealt: this.totalDamageDealt,
       bossesDefeated: this.bossesDefeated,
       equipmentEarned: this.equipmentEarned,
+      queuedRewardCount: this.queuedRewardCount,
     };
   }
 
@@ -518,6 +531,7 @@ export class SessionCoordinator {
     return {
       state: this.state,
       gameState: this.gameState,
+      queuedRewardCount: this.queuedRewardCount,
       activeProblem: this.activeProblem,
       activeLifecycleState: this.activeLifecycleState,
       remainingBossQueue: this.remainingBossQueue,
@@ -562,29 +576,34 @@ export class SessionCoordinator {
       return;
     }
 
-    if (this.state.kind !== 'manual-paused' && this.state.kind !== 'idle-paused') {
-      this.rewardElapsedMs += ms;
-      while (this.rewardElapsedMs >= REWARD_INTERVAL_MS) {
-        this.rewardElapsedMs -= REWARD_INTERVAL_MS;
-        this.rewardPending = true;
-      }
-      if (this.isAwaitingAdvance) {
-        this.presentDueReward();
-      }
+    const rewardClockAdvances = this.state.kind !== 'manual-paused' && this.state.kind !== 'idle-paused';
+    const activeTimeAdvances = this.state.kind === 'active' || this.state.kind === 'defeat';
+    if (rewardClockAdvances) {
+      const rewardMs = this.state.kind === 'active' ? Math.min(ms, IDLE_LIMIT_MS - this.idleMs) : ms;
+      this.advanceRewardClock(rewardMs, activeTimeAdvances);
     }
 
     // Active time accumulates while active and during the (decorative) defeat
     // decision; it is excluded during manual pause, idle pause, and boss fights.
-    if (this.state.kind === 'active' || this.state.kind === 'defeat') {
+    if (activeTimeAdvances) {
       this.activeTimeMs += ms;
       this.evaluateTriggers();
+    }
+
+    if (rewardClockAdvances && this.isAwaitingAdvance) {
+      this.presentDueReward();
     }
 
     // The one-minute keyboard-idle interval runs while the student is expected to
     // be engaged: active play, a boss fight, and the (decorative) defeat decision.
     // Any keyboard keypress resets it in all of these states (Q6). It never runs
     // while a pause modal (manual/idle) is already showing.
-    if (this.state.kind === 'active' || this.state.kind === 'boss-fight' || this.state.kind === 'defeat') {
+    const rewardOverlayVisible =
+      (this.state.kind === 'active' || this.state.kind === 'boss-fight') && this.game.state.pendingReward !== null;
+    if (
+      !rewardOverlayVisible &&
+      (this.state.kind === 'active' || this.state.kind === 'boss-fight' || this.state.kind === 'defeat')
+    ) {
       this.idleMs += ms;
       if (this.idleMs >= IDLE_LIMIT_MS) {
         if (this.state.kind === 'defeat') {
@@ -809,17 +828,76 @@ export class SessionCoordinator {
     const item = this.game.equipItem(category);
     if (item !== null) {
       this.equipmentEarned += 1;
+      this.idleMs = 0;
+      this.presentDueReward();
       return true;
     }
     return false;
   }
 
+  /** Skip the active offer without changing loadout or equipment metrics. */
+  skipReward(): boolean {
+    this.syncClocks();
+    const skipped = this.game.skipReward();
+    if (skipped) {
+      this.idleMs = 0;
+      this.presentDueReward();
+    }
+    this.checkAndNotify();
+    return skipped;
+  }
+
   private presentDueReward(): void {
-    if (!this.rewardPending) {
+    if (this.game.state.pendingReward !== null) {
       return;
     }
-    this.game.offerReward();
-    this.rewardPending = false;
+    const offer = this.rewardQueue.shift();
+    if (offer !== undefined) {
+      this.game.presentReward(offer);
+    }
+  }
+
+  private advanceRewardClock(ms: number, activeTimeAdvances: boolean): void {
+    if (this.game.state.pendingReward !== null) {
+      return;
+    }
+
+    if (this.isAwaitingAdvance && this.rewardQueue.length > 0) {
+      this.presentDueReward();
+      return;
+    }
+
+    const elapsedAtStart = this.activeTimeMs;
+    let activeOffsetMs = 0;
+    let remainingMs = ms;
+
+    while (remainingMs > 0) {
+      const untilIntervalMs = REWARD_INTERVAL_MS - this.rewardIntervalRemainderMs;
+      const advanceMs = Math.min(remainingMs, untilIntervalMs);
+      this.rewardTimeMs += advanceMs;
+      this.rewardIntervalRemainderMs += advanceMs;
+      if (activeTimeAdvances) {
+        activeOffsetMs += advanceMs;
+      }
+      remainingMs -= advanceMs;
+
+      if (this.rewardIntervalRemainderMs < REWARD_INTERVAL_MS) {
+        continue;
+      }
+
+      this.rewardIntervalRemainderMs = 0;
+      const activeTimeAtOffer = activeTimeAdvances ? elapsedAtStart + activeOffsetMs : elapsedAtStart;
+      if (activeTimeAtOffer <= this.durationMs || this.bossIsSessionEnding) {
+        this.rewardQueue.push(this.game.createRewardOffer(this.durationMs, this.rewardTimeMs));
+      }
+
+      if (this.isAwaitingAdvance) {
+        this.presentDueReward();
+        if (this.game.state.pendingReward !== null) {
+          return;
+        }
+      }
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -848,6 +926,8 @@ export class SessionCoordinator {
     this.bossQueue = [];
     this.bossPending = false;
     this.bossIsSessionEnding = false;
+    this.rewardQueue = [];
+    this.game.skipReward();
     this.state = { kind: 'summary' };
   }
 
