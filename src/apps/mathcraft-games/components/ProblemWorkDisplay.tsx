@@ -16,7 +16,7 @@ const OPERATION_LABELS = {
 } as const;
 
 export function ProblemWorkDisplay({ lifecycle }: ProblemWorkDisplayProps) {
-  const { snapshot, totalSteps } = lifecycle;
+  const { snapshot } = lifecycle;
   const solved = snapshot.stepIndex === null;
   const linesAfterRow = new Map<number, ArithmeticStepSnapshot['operatorLines'][number][]>();
   for (const line of snapshot.operatorLines) {
