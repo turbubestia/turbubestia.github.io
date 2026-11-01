@@ -29,11 +29,6 @@ export function ProblemWorkDisplay({ lifecycle }: ProblemWorkDisplayProps) {
     <div className="flex min-w-0 flex-col items-center gap-3 overflow-x-auto rounded border border-rpg-border bg-rpg-slot p-4">
       <div className="flex w-full items-center justify-between border-b border-rpg-border pb-2">
         <span className="font-pixel text-xs text-rpg-text">{OPERATION_LABELS[snapshot.problemOperation].toUpperCase()}</span>
-        {!solved && (
-          <span className="font-pixel text-xs text-rpg-highlight">
-            STEP {snapshot.stepIndex! + 1} / {totalSteps}
-          </span>
-        )}
       </div>
 
       <div className="inline-flex flex-col gap-0.5 font-rpg text-2xl">
