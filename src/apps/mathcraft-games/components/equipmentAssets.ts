@@ -57,10 +57,6 @@ export function regularEnemyAssetUrl(encounter: Extract<GameState['encounter'], 
   return assetUrl('mobs', (mobManifest as Array<{ filename: string }>)[index].filename);
 }
 
-export function bossAssetUrl(encounter: Extract<GameState['encounter'], { kind: 'boss' }>): string {
-  const index = Math.min(
-    (bossManifest as Array<{ filename: string }>).length - 1,
-    Math.max(0, encounter.activeHeartIndex),
-  );
-  return assetUrl('boss', (bossManifest as Array<{ filename: string }>)[index].filename);
+export function bossAssetUrl(): string {
+  return assetUrl('boss', (bossManifest as Array<{ filename: string }>)[0].filename);
 }

@@ -61,7 +61,7 @@ export function GameView({ gameState }: GameViewProps) {
                     />
                     <span className="text-sm text-rpg-text-dim">{encounter.queuedProblems} queued</span>
                   </div>
-                  <PlaceholderArt name="Boss" src={bossAssetUrl(encounter)} alt="Boss" />
+                  <PlaceholderArt name="Boss" src={bossAssetUrl()} alt="Boss" />
                   <span className="font-pixel text-[11px] text-rpg-text-dim">BOSS</span>
                 </>
               )}

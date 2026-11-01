@@ -29,23 +29,32 @@ describe('GameView (MGP6-03)', () => {
     expect(screen.getByRole('img', { name: 'Hero' }).getAttribute('src')).toContain('289px-Steve_in_leather_armor.png');
   });
 
-  it('renders boss state with the active heart and queued problem count', () => {
-    const state = makeGameState({
-      encounter: {
-        kind: 'boss',
-        hearts: [
-          { problemId: 'h1', health: 2, maxHealth: 2 },
-          { problemId: 'h2', health: 2, maxHealth: 2 },
-          { problemId: 'h3', health: 2, maxHealth: 2 },
-        ],
-        activeHeartIndex: 1,
-        queuedProblems: 2,
-      },
+  it('keeps boss artwork fixed while the active heart label and health progress', () => {
+    const hearts = [
+      { problemId: 'h1', health: 2, maxHealth: 2 },
+      { problemId: 'h2', health: 1, maxHealth: 3 },
+      { problemId: 'h3', health: 3, maxHealth: 4 },
+    ];
+    const gameStateAtHeart = (activeHeartIndex: number) => makeGameState({
+      encounter: { kind: 'boss', hearts, activeHeartIndex, queuedProblems: 3 - activeHeartIndex },
     });
-    render(<GameView gameState={state} />);
-    // The active heart (index 1) drives the A/B counter and the HEART N sublabel.
-    expect(screen.getByText('HEART 2')).not.toBeNull();
-    expect(screen.getByText('2 queued')).not.toBeNull();
+    const { container, rerender } = render(<GameView gameState={gameStateAtHeart(0)} />);
+    const bossImage = screen.getByRole('img', { name: 'Boss' });
+    const firstHeartAsset = bossImage.getAttribute('src');
+
+    expect(firstHeartAsset).toContain('Elder_Guardian_JE2_BE2.png');
+
+    hearts.forEach((heart, activeHeartIndex) => {
+      rerender(<GameView gameState={gameStateAtHeart(activeHeartIndex)} />);
+      expect(screen.getByRole('img', { name: 'Boss' }).getAttribute('src')).toBe(firstHeartAsset);
+      expect(screen.getByText(`HEART ${activeHeartIndex + 1}`)).not.toBeNull();
+      const counters = Array.from(container.querySelectorAll('[class*="min-w-17"]'));
+      expect(counters[1].textContent).toContain(`${heart.health}/${heart.maxHealth}`);
+    });
+
+    expect(screen.getByText('1 queued')).not.toBeNull();
+    const counters = Array.from(container.querySelectorAll('[class*="min-w-17"]'));
+    expect(counters.map((counter) => counter.textContent)).toEqual(['12/12', '3/4HEART 3']);
   });
 
   it('renders the melee and range inventory slots with a dash when empty', () => {
